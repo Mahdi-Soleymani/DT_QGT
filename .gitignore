@@ -1,0 +1,72 @@
+# === Mac system files ===
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# === Python artifacts ===
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+*.pyd
+*.pyo
+
+# === Jupyter Notebook checkpoints ===
+.ipynb_checkpoints/
+
+# === Logs and outputs ===
+*.log
+*.out
+*.tmp
+*.swp
+nohup.out
+
+# === Model files ===
+*.h5
+*.hdf5
+*.ckpt
+*.pt
+*.pth
+*.t7
+*.onnx
+*.joblib
+*.pkl
+*.sav
+
+# === Training artifacts ===
+wandb/
+checkpoints/
+runs/
+logs/
+tensorboard/
+
+# === Data files ===
+*.csv
+*.tsv
+*.npz
+*.npy
+*.zip
+*.tar
+*.gz
+*.tar.gz
+
+# === Env and IDE files ===
+.env
+.venv/
+env/
+venv/
+.idea/
+.vscode/
+
+# === OS/Backup files ===
+*.bak
+*.orig
+*.tmp
+
+# === Test cache ===
+.tox/
+pytest_cache/
+
+# === Trash on Mac ===
+.Trashes
