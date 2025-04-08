@@ -141,12 +141,12 @@ def cleanup_distributed():
 
 
 def main():
-    model = m.DecisionTransformer(config)
+
+    local_rank, rank, world_size = setup_distributed()
+    model = m.DecisionTransformer(config).to(local_rank)
 
  
-    local_rank, rank, world_size = setup_distributed()
-
-    model = model().to(local_rank)
+    
     model = DDP(model, device_ids=[local_rank])
 
     dataset = dataset()
