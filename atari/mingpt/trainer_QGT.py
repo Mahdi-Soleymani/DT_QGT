@@ -51,8 +51,9 @@ class TrainerConfig:
 
 
 class Trainer:
-
+    
     def __init__(self, model, dataloader, device, rank, config):
+
         
         self.model = model
         self.dataloader = dataloader

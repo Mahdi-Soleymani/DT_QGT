@@ -157,6 +157,12 @@ def main():
         #wandb.init(mpde="disabled")
         wandb.init(project="DT", config=config)
 
+
+    print("Trainer is:", Trainer)
+    print("Type:", type(Trainer))
+    import inspect
+    print("Signature:", inspect.signature(Trainer))
+
     trainer = Trainer(model, dataloader, local_rank, rank, config)
     trainer.train()
 
