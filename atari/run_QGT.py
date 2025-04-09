@@ -51,7 +51,7 @@ parser.add_argument('--weight_decay', type=float, default=0.1, help='Weight deca
 parser.add_argument('--lr_decay', type=bool, default=False, help='Whether to apply learning rate decay')
 parser.add_argument('--warmup_tokens', type=float, default=375e6, help='Number of warmup tokens')
 parser.add_argument('--final_tokens', type=float, default=260e9, help='Total number of tokens for training')
-parser.add_argument('--ckpt_path', type=str, default='dt_model_checkpoint_22.pth', help='Checkpoint path for saving model')
+parser.add_argument('--dataset_path', type=str, default='data_6e6.h5', help='dataset path')
 parser.add_argument('--num_workers', type=int, default=0, help='Number of workers for data loading')
 parser.add_argument('--rtg_dim', type=int, default=1, help='Reward-to-go dimension')
 parser.add_argument('--n_embd', type=int, default=512, help='Embedding size')
@@ -96,6 +96,7 @@ config = t.TrainerConfig(
     embd_pdrop=args.embd_pdrop,
     n_layer=args.n_layer,
     n_head=args.n_head,
+    dataset_path=args.dataset_path,
     attn_pdrop=args.attn_pdrop,
     resid_pdrop=args.resid_pdrop,
     pad_scalar_val=args.pad_scalar_val,
