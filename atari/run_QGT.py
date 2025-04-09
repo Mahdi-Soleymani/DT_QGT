@@ -157,7 +157,7 @@ def main():
         #wandb.init(mpde="disabled")
         wandb.init(project="DT", config=config)
 
-    trainer = Trainer(model=model, dataloader=dataloader, device=local_rank, rank=rank, config=config)
+    trainer = Trainer(model, dataloader, local_rank, rank, config)
     trainer.train()
 
     cleanup_distributed()
