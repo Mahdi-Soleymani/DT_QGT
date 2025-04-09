@@ -141,7 +141,27 @@ class Trainer:
                                 # Log gradient norms
                         grad_norm = torch.norm(torch.stack([torch.norm(p.grad) for p in model.parameters() if p.grad is not None]), 2)
                         wandb.log({"gradient_norm": grad_norm.item()})
-                        
+                        total_norm = 0.0
+                        for p in model.parameters():
+                            if p.requires_grad:
+                                total_norm += p.data.norm(2).item()
+                        wandb.log({"total_param_norm": total_norm})
+
+
+                        nonzero_count = 0
+                        total_count = 0
+
+                        for p in model.parameters():
+                            if p.grad is not None:
+                                total_count += p.numel()
+                                nonzero_count += (p.grad != 0).sum().item()
+
+                        if total_count > 0:
+                            nonzero_ratio = nonzero_count / total_count
+                            wandb.log({"nonzero_grad_ratio": nonzero_ratio})
+
+
+                                                                        
                     
                     
                     optimizer.step()

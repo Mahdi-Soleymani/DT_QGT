@@ -230,10 +230,23 @@ class DecisionTransformer(nn.Module):
         loss = None
         if targets is not None:
 
-        
-            loss_fn = nn.BCEWithLogitsLoss(reduction="none")
+            if self.config.criterion=="bce":
+                loss_fn = nn.BCEWithLogitsLoss(reduction="none")
+                loss = loss_fn(logits, targets)
+            if self.config.criterion=="mse":
+                probs = torch.sigmoid(logits)  # convert logits to [0,1]
+                loss= nn.MSELoss(reduction="none")(probs, targets)
+            if self.config.criterion=="mae":
+                probs = torch.sigmoid(logits)
+                loss_fn = torch.nn.L1Loss(reduction="none")          # MAE
+                loss = loss_fn(logits, targets)
+            if self.config.criterion=="hub":
+                probs = torch.sigmoid(logits)
+                loss_fn = torch.nn.L1Loss(reduction="none")          # MAE
+                loss = loss_fn(logits, targets)
+
             
-            loss = loss_fn(logits, targets) 
+             
 
             # Create mask of shape (block_size, k)
             mask = torch.zeros_like(logits, device=logits.device)
