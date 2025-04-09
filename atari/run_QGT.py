@@ -149,9 +149,9 @@ def main():
     
     model = DDP(model, device_ids=[local_rank])
 
-    dataset = dataset()
-    sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank)
-    dataloader = DataLoader(dataset, batch_size=config.batch_size, sampler=sampler)
+    data = dataset()
+    sampler = DistributedSampler(data, num_replicas=world_size, rank=rank)
+    dataloader = DataLoader(data, batch_size=config.batch_size, sampler=sampler)
 
     if rank==0:
         #wandb.init(mpde="disabled")
