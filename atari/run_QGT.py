@@ -65,6 +65,8 @@ parser.add_argument('--resid_pdrop', type=float, default=0.1, help='Residual dro
 parser.add_argument('--pad_scalar_val', type=float, default=-10, help='Padding scalar value')
 parser.add_argument('--pad_vec_val', type=float, default=-30, help='Padding vector value')
 parser.add_argument('--dataset_path', type=str, default="atari/data_6e6.h5", help='Path to Dataset')
+parser.add_argument('--criterion', type=str, default='bce', help='Loss criterion (e.g., mse, mae)')
+parser.add_argument('--clip_grad', type=bool, default=False, help='Whether to apply gradient clipping')
 
 
 # Parse arguments
@@ -86,7 +88,6 @@ config = t.TrainerConfig(
     lr_decay=args.lr_decay,
     warmup_tokens=args.warmup_tokens,
     final_tokens=args.final_tokens,
-    ckpt_path=args.ckpt_path,
     num_workers=args.num_workers,
     rtg_dim=args.rtg_dim,
     n_embd=args.n_embd,
@@ -101,6 +102,8 @@ config = t.TrainerConfig(
     pad_vec_val=args.pad_vec_val,
     seed=args.seed,
     dataset_path=args.dataset_path
+    criterion=args.criterion,
+    clip_grad=args.clip_grad
 )
 
 

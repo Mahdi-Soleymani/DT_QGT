@@ -88,8 +88,9 @@ class Trainer:
 
     def save_checkpoint(self):
         raw_model = self.model.module if hasattr(self.model, "module") else self.model
-        logger.info("saving %s", self.config.ckpt_path)
-        torch.save(raw_model.state_dict(), self.config.ckpt_path)
+        model_filename = f"models/{wandb.run.name}.pth"
+        logger.info("saving %s", model_filename)
+        torch.save(raw_model.state_dict(), model_filename)
         
 
 
@@ -169,9 +170,9 @@ class Trainer:
             avg_loss = float(np.mean(losses))
             logger.info("Epoch %d - Avg Loss: %f", epoch + 1, avg_loss)
 
-            if config.ckpt_path is not None:
-                self.save_checkpoint()
-                print("check_point saved")
+        
+            self.save_checkpoint()
+            print("check_point saved")
 
 
         # Initialize wandb
