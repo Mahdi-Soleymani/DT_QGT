@@ -127,8 +127,8 @@ class Trainer:
                     # print("\n") 
                     # time.sleep(1)
                     
-                    
-                    #torch.nn.utils.clip_grad_norm_(model.parameters(), config.grad_norm_clip)
+                    if config.clip_grad:
+                        torch.nn.utils.clip_grad_norm_(model.parameters(), config.grad_norm_clip)
                     
 
                     if self.rank==0:
@@ -190,9 +190,9 @@ class Trainer:
             avg_loss = float(np.mean(losses))
             logger.info("Epoch %d - Avg Loss: %f", epoch + 1, avg_loss)
 
-        
-            self.save_checkpoint()
-            print("check_point saved")
+            if self.rank==0:
+                self.save_checkpoint()
+                print("check_point saved")
 
 
         # Initialize wandb

@@ -101,7 +101,6 @@ config = t.TrainerConfig(
     pad_scalar_val=args.pad_scalar_val,
     pad_vec_val=args.pad_vec_val,
     seed=args.seed,
-    dataset_path=args.dataset_path
     criterion=args.criterion,
     clip_grad=args.clip_grad
 )
