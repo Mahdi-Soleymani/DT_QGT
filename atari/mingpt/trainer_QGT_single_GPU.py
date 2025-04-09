@@ -90,13 +90,11 @@ class Trainer:
         raw_model = self.model.module if hasattr(self.model, "module") else self.model
         logger.info("saving %s", self.config.ckpt_path)
         torch.save(raw_model.state_dict(), self.config.ckpt_path)
-        
-
 
     def train(self):
         model, config = self.model, self.config
         #raw_model = model.module if hasattr(self.model, "module") else model
-        optimizer = model.module.configure_optimizers(config)
+        optimizer = model.configure_optimizers(config)
 
         self.tokens = 0  
         def run_epoch(mode,epoch_num=0):
