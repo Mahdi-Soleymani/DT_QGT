@@ -165,7 +165,7 @@ def main():
     import inspect
     print("Signature:", inspect.signature(Trainer))
 
-    trainer = t.Trainer(model, dataloader, local_rank, rank, config)
+    trainer = t.Trainer(model, dataloader, local_rank, rank, config, False)
     trainer.train()
 
     cleanup_distributed()

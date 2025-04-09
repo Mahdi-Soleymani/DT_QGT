@@ -52,9 +52,13 @@ class TrainerConfig:
 
 class Trainer:
     
-    def __init__(self, model, dataloader, device, rank, config):
+    def __init__(self, model, dataloader, device, rank, config, single_GPU):
 
-        
+        if single_GPU:
+            self.single_gpu=True
+        else:
+            self.single_gpu=False  
+
         self.model = model
         self.dataloader = dataloader
         self.device = device
@@ -97,7 +101,10 @@ class Trainer:
     def train(self):
         model, config = self.model, self.config
         #raw_model = model.module if hasattr(self.model, "module") else model
-        optimizer = model.module.configure_optimizers(config)
+        if self.single_gpu:
+            optimizer=model.configure_optimizers(config)
+        else:
+            optimizer = model.module.configure_optimizers(config)
 
         self.tokens = 0  
         def run_epoch(mode,epoch_num=0):
@@ -111,7 +118,13 @@ class Trainer:
                 q, r, rtg, mask_lengths = q.to(self.device), r.to(self.device), rtg.to(self.device), mask_lengths.to(self.device)
                 
                 with torch.set_grad_enabled(True):
-                    _, loss = model(mask_lengths,rtg, r, q, q)
+                    probabilities, loss = model(mask_lengths,rtg, r, q, q)
+                    if self.rank == 0:
+                        wandb.log({
+                        "prob_mean": probabilities.mean().item(),
+                        "prob_std": probabilities.std().item()
+                        },)
+
                     loss = loss.mean()
                     losses.append(loss.item())
 

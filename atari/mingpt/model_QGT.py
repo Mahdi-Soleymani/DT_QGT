@@ -234,16 +234,13 @@ class DecisionTransformer(nn.Module):
                 loss_fn = nn.BCEWithLogitsLoss(reduction="none")
                 loss = loss_fn(logits, targets)
             if self.config.criterion=="mse":
-                probs = torch.sigmoid(logits)  # convert logits to [0,1]
-                loss= nn.MSELoss(reduction="none")(probs, targets)
+                loss= nn.MSELoss(reduction="none")(probabilities, targets)
             if self.config.criterion=="mae":
-                probs = torch.sigmoid(logits)
                 loss_fn = torch.nn.L1Loss(reduction="none")          # MAE
-                loss = loss_fn(logits, targets)
+                loss = loss_fn(probabilities, targets)
             if self.config.criterion=="hub":
-                probs = torch.sigmoid(logits)
                 loss_fn = torch.nn.L1Loss(reduction="none")          # MAE
-                loss = loss_fn(logits, targets)
+                loss = loss_fn(probabilities, targets)
 
             
              
