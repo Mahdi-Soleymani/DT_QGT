@@ -16,7 +16,7 @@ from torch.nn import functional as F
 import math
 from torch.utils.data import Dataset
 from mingpt.model_QGT import DecisionTransformer, GPTConfig
-from mingpt.trainer_QGT_on_the_fly import Trainer, TrainerConfig
+from mingpt.trainer_QGT import Trainer, TrainerConfig
 from mingpt.utils import sample
 from collections import deque
 import random
