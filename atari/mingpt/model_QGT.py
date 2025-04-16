@@ -293,9 +293,10 @@ class DecisionTransformer(nn.Module):
             # Create mask of shape (block_size, k)
             mask = torch.zeros_like(logits, device=logits.device)
             for i in range(logits.shape[0]):
-                mask[i,:mask_length[i], :] = 1  # Set first mask_length rows to 1
+                mask[i,:mask_length[i]-1, :] = 1  # Set first mask_length rows to 1
 
             # Apply mask: Keep only the relevant losses
+
             loss = loss * mask  # Zero out the masked parts
             # print(loss)
             # l=2
