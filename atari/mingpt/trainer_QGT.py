@@ -180,7 +180,8 @@ class Trainer:
                     optimizer.step()
 
                     if config.lr_decay:
-                        self.tokens += (y >= 0).sum()
+                        self.tokens +=  mask_lengths.sum().item()
+
                         if self.tokens < config.warmup_tokens:
                             lr_mult = float(self.tokens) / float(max(1, config.warmup_tokens))
                         else:
@@ -191,6 +192,9 @@ class Trainer:
                             param_group['lr'] = lr
                     else:
                         lr = config.learning_rate
+
+                    
+
 
                     #report progress
                     pbar.set_description(f"Epoch {epoch_num+1} Loss: {loss.item():.5f}, LR: {lr:e}")

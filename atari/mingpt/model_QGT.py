@@ -176,7 +176,15 @@ class DecisionTransformer(nn.Module):
 
     def configure_optimizers(self, config):
     # Define the optimizer (e.g., Adam)
-        optimizer = optim.Adam(self.parameters(), lr=config.learning_rate)
+        optimizer = optim.AdamW(self.parameters(), lr=config.learning_rate)
+        optimizer = torch.optim.AdamW(
+        self.parameters(),
+        lr=config.learning_rate,
+        betas=config.betas,
+        weight_decay=config.weight_decay,
+)
+
+        # optimizer = optim.Adam(self.parameters(), lr=config.learning_rate)
         #optimizer = torch.optim.SGD(self.parameters(), lr=config.learning_rate)
 
         return optimizer  # Or return (optimizer, scheduler) if you use a scheduler

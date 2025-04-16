@@ -41,14 +41,14 @@ parser = argparse.ArgumentParser()
 # Add arguments for each config parameter
 parser.add_argument('--seed', type=int, default=123, help='Random seed for reproducibility')
 parser.add_argument('--epochs', type=int, default=10, help='Number of epochs to train')
-parser.add_argument('--batch_size', type=int, default=128, help='Batch size')
-parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate')
+parser.add_argument('--batch_size', type=int, default=1024, help='Batch size')
+parser.add_argument('--learning_rate', type=float, default=2e-3, help='Learning rate')
 parser.add_argument('--betas', type=tuple, default=(0.9, 0.95), help='Betas for Adam optimizer')
 parser.add_argument('--grad_norm_clip', type=float, default=1.0, help='Gradient norm clipping')
 parser.add_argument('--weight_decay', type=float, default=0.1, help='Weight decay for optimizer')
-parser.add_argument('--lr_decay', type=bool, default=False, help='Whether to apply learning rate decay')
-parser.add_argument('--warmup_tokens', type=float, default=375e6, help='Number of warmup tokens')
-parser.add_argument('--final_tokens', type=float, default=260e9, help='Total number of tokens for training')
+parser.add_argument('--lr_decay', type=bool, default=True, help='Whether to apply learning rate decay')
+parser.add_argument('--warmup_tokens', type=float, default=18e6, help='Number of warmup tokens')
+parser.add_argument('--final_tokens', type=float, default=18e8, help='Total number of tokens for training')
 parser.add_argument('--ckpt_path', type=str, default='dt_model_checkpoint_22.pth', help='Checkpoint path for saving model')
 parser.add_argument('--num_workers', type=int, default=0, help='Number of workers for data loading')
 parser.add_argument('--rtg_dim', type=int, default=1, help='Reward-to-go dimension')
@@ -64,7 +64,7 @@ parser.add_argument('--pad_scalar_val', type=float, default=-10, help='Padding s
 parser.add_argument('--pad_vec_val', type=float, default=-30, help='Padding vector value')
 parser.add_argument('--dataset_path', type=str, default="atari/data_6e6.h5", help='Path to Dataset')
 parser.add_argument('--criterion', type=str, default='bce', help='Loss criterion (e.g., mse, mae)')
-parser.add_argument('--clip_grad', type=bool, default=False, help='Whether to apply gradient clipping')
+parser.add_argument('--clip_grad', type=bool, default=True, help='Whether to apply gradient clipping')
 parser.add_argument('--wandb', type=bool, default=False, help='Whether to apply gradient clipping')
 
 # Parse arguments
@@ -159,8 +159,22 @@ config.query_dim=config.k
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model = m.DecisionTransformer(config)
 model = model.to(device)
+
+
+########3
+# trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+# total     = sum(p.numel() for p in model.parameters())
+# print(f"Trainable: {trainable:,}")
+# print(f"Total:     {total:,}")
+# print(f"Frozen:    {total - trainable:,}")
+# print("Total dataset size:", len(dataset))
+# time.sleep(100)
+########
+
 dataset= dataset()
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=config.batch_size, shuffle=True)
+
+
 if config.wb:
     wandb.init(project="DT", config=config)
 else:
