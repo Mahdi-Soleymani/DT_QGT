@@ -119,6 +119,7 @@ class Trainer:
                 
                 with torch.set_grad_enabled(True):
                     probabilities, loss = model(mask_lengths,rtg, r, q, q)
+
                     if self.rank == 0:
                         wandb.log({
                         "prob_mean": probabilities.mean().item(),
@@ -201,6 +202,20 @@ class Trainer:
                     #report progress
                     pbar.set_description(f"Epoch {epoch_num+1} Loss: {loss.item():.5f}, LR: {lr:e}")
                     pbar.update(1)
+            
+
+                if self.rank == 0:
+
+                    with torch.no_grad():
+                        preds = (probabilities > 0.5).float()            # Binary predictions
+                        acc = (preds == q).float().mean()  # Accuracy over all tokens
+                    
+                    wandb.log({
+                        "accuracy": acc.item(),
+                        "lr": lr,
+                    })
+
+
             if not is_train:
                 test_loss = float(np.mean(losses))
                 logger.info("test loss: %f", test_loss)
