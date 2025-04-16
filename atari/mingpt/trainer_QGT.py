@@ -181,7 +181,6 @@ class Trainer:
                     optimizer.step()
 
                     if self.config.lr_decay:
-                        print("here")
 
                         self.tokens +=  mask_lengths.sum().item()
 
@@ -218,8 +217,7 @@ class Trainer:
                             total_tokens += valid_len
 
                         acc = total_correct / (self.config.k*total_tokens)
-                        print(acc)
-                        time.sleep(1)
+               
                     wandb.log({
                         "accuracy": acc.item(),
                         "lr": lr,
