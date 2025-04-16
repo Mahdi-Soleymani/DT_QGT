@@ -149,7 +149,8 @@ def main():
 
  
     
-    model = DDP(model, device_ids=[local_rank])
+    #model = DDP(model, device_ids=[local_rank])
+    model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=True)
 
     data = dataset()
     sampler = DistributedSampler(data, num_replicas=world_size, rank=rank)
