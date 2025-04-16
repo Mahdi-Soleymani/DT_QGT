@@ -41,12 +41,12 @@ parser = argparse.ArgumentParser()
 # Add arguments for each config parameter
 parser.add_argument('--seed', type=int, default=123, help='Random seed for reproducibility')
 parser.add_argument('--epochs', type=int, default=10, help='Number of epochs to train')
-parser.add_argument('--batch_size', type=int, default=1024, help='Batch size')
-parser.add_argument('--learning_rate', type=float, default=2e-3, help='Learning rate')
+parser.add_argument('--batch_size', type=int, default=128, help='Batch size')
+parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate')
 parser.add_argument('--betas', type=tuple, default=(0.9, 0.95), help='Betas for Adam optimizer')
 parser.add_argument('--grad_norm_clip', type=float, default=1.0, help='Gradient norm clipping')
 parser.add_argument('--weight_decay', type=float, default=0.1, help='Weight decay for optimizer')
-parser.add_argument('--lr_decay', type=bool, default=True, help='Whether to apply learning rate decay')
+parser.add_argument('--lr_decay', type=bool, default=False, help='Whether to apply learning rate decay')
 parser.add_argument('--warmup_tokens', type=float, default=18e6, help='Number of warmup tokens')
 parser.add_argument('--final_tokens', type=float, default=18e8, help='Total number of tokens for training')
 parser.add_argument('--ckpt_path', type=str, default='dt_model_checkpoint_22.pth', help='Checkpoint path for saving model')
@@ -109,50 +109,49 @@ config = t.TrainerConfig(
     label_smoothing=args.label_smoothing
 )
 
-def dataset():
-#"""Load dataset from HDF5 file and create DataLoader."""
-    with h5py.File(config.dataset_path, "r") as f:
-        queries = torch.tensor(f["queries"][:], dtype=torch.float32)
-        results = torch.tensor(f["results"][:], dtype=torch.float32)
-        rtgs = torch.tensor(f["rtgs"][:], dtype=torch.float32)
-        mask_lengths = torch.tensor(f["mask_lengths"][:], dtype=torch.long)
+# def dataset():
+# #"""Load dataset from HDF5 file and create DataLoader."""
+#     with h5py.File(config.dataset_path, "r") as f:
+#         queries = torch.tensor(f["queries"][:], dtype=torch.float32)
+#         results = torch.tensor(f["results"][:], dtype=torch.float32)
+#         rtgs = torch.tensor(f["rtgs"][:], dtype=torch.float32)
+#         mask_lengths = torch.tensor(f["mask_lengths"][:], dtype=torch.long)
 
-    dataset = TensorDataset(queries, results, rtgs, mask_lengths)
-    #self.data_loader = DataLoader(dataset, batch_size=self.config.batch_size, shuffle=True, num_workers=self.config.num_workers)
-    return dataset
+#     dataset = TensorDataset(queries, results, rtgs, mask_lengths)
+#     #self.data_loader = DataLoader(dataset, batch_size=self.config.batch_size, shuffle=True, num_workers=self.config.num_workers)
+#     return dataset
 
 ##### for test on repeated data for sanity check
 
-# def dataset():
-#         # Keep only the first 10 unique samples
-#     N_unique = 10
-#     repeat_factor = 100  # how many times to repeat them
-#     with h5py.File(config.dataset_path, "r") as f:
-#         queries = torch.tensor(f["queries"][: N_unique], dtype=torch.float32)
-#         results = torch.tensor(f["results"][: N_unique], dtype=torch.float32)
-#         rtgs = torch.tensor(f["rtgs"][: N_unique], dtype=torch.float32)
-#         mask_lengths = torch.tensor(f["mask_lengths"][: N_unique], dtype=torch.long)
+def dataset():
+        # Keep only the first 10 unique samples
+    N_unique = 10000
+    repeat_factor = 10 # how many times to repeat them
+    with h5py.File(config.dataset_path, "r") as f:
+        queries = torch.tensor(f["queries"][: N_unique], dtype=torch.float32)
+        results = torch.tensor(f["results"][: N_unique], dtype=torch.float32)
+        rtgs = torch.tensor(f["rtgs"][: N_unique], dtype=torch.float32)
+        mask_lengths = torch.tensor(f["mask_lengths"][: N_unique], dtype=torch.long)
 
-#     # Print shapes for debugging
-#     print("queries shape before repeat:", queries.shape)
+    # Print shapes for debugging
+    print("queries shape before repeat:", queries.shape)
 
 
-#     if results.ndim == 1:
-#         results = results.unsqueeze(0)
-#     if rtgs.ndim == 1:
-#         rtgs = rtgs.unsqueeze(0)
+    if results.ndim == 1:
+        results = results.unsqueeze(0)
+    if rtgs.ndim == 1:
+        rtgs = rtgs.unsqueeze(0)
 
-#     N = 10000
 
-#     queries = queries[:N_unique].repeat(repeat_factor, 1, 1)
-#     results = results[:N_unique].repeat(repeat_factor, 1)
-#     rtgs = rtgs[:N_unique].repeat(repeat_factor, 1)
-#     mask_lengths = mask_lengths[:N_unique].repeat(repeat_factor)
+    queries = queries[:N_unique].repeat(repeat_factor, 1, 1)
+    results = results[:N_unique].repeat(repeat_factor, 1)
+    rtgs = rtgs[:N_unique].repeat(repeat_factor, 1)
+    mask_lengths = mask_lengths[:N_unique].repeat(repeat_factor)
 
-#     print(f"Dataset shape after repeat: {queries.shape}")
+    print(f"Dataset shape after repeat: {queries.shape}")
 
-#     dataset = TensorDataset(queries, results, rtgs, mask_lengths)
-#     return dataset
+    dataset = TensorDataset(queries, results, rtgs, mask_lengths)
+    return dataset
 
 
 

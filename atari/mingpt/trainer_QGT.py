@@ -179,7 +179,9 @@ class Trainer:
                     
                     optimizer.step()
 
-                    if config.lr_decay:
+                    if self.config.lr_decay:
+                        print("here")
+
                         self.tokens +=  mask_lengths.sum().item()
 
                         if self.tokens < config.warmup_tokens:

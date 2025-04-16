@@ -68,6 +68,7 @@ parser.add_argument('--criterion', type=str, default='bce', help='Loss criterion
 parser.add_argument('--clip_grad', type=bool, default=False, help='Whether to apply gradient clipping')
 parser.add_argument('--label_smoothing', type=float, default=0.0,
                     help='Label smoothing factor for binary targets (0.0 = no smoothing)')
+parser.add_argument('--repeated_dataset', type=bool, default=False, help='Whether to use small repeated dataset')
 
 
 # Parse arguments
@@ -105,7 +106,8 @@ config = t.TrainerConfig(
     seed=args.seed,
     criterion=args.criterion,
     clip_grad=args.clip_grad,
-    label_smoothing=args.label_smoothing
+    label_smoothing=args.label_smoothing,
+    repeated_dataset=args.repeated_dataset
 )
 
 
@@ -115,17 +117,74 @@ set_seed(config.seed)
 config.query_dim=config.k
 
 
-def dataset():
-#"""Load dataset from HDF5 file and create DataLoader."""
-    with h5py.File(config.dataset_path, "r") as f:
-        queries = torch.tensor(f["queries"][:], dtype=torch.float32)
-        results = torch.tensor(f["results"][:], dtype=torch.float32)
-        rtgs = torch.tensor(f["rtgs"][:], dtype=torch.float32)
-        mask_lengths = torch.tensor(f["mask_lengths"][:], dtype=torch.long)
+# def dataset():
+# #"""Load dataset from HDF5 file and create DataLoader."""
+#     with h5py.File(config.dataset_path, "r") as f:
+#         queries = torch.tensor(f["queries"][:], dtype=torch.float32)
+#         results = torch.tensor(f["results"][:], dtype=torch.float32)
+#         rtgs = torch.tensor(f["rtgs"][:], dtype=torch.float32)
+#         mask_lengths = torch.tensor(f["mask_lengths"][:], dtype=torch.long)
 
-    dataset = TensorDataset(queries, results, rtgs, mask_lengths)
-    #self.data_loader = DataLoader(dataset, batch_size=self.config.batch_size, shuffle=True, num_workers=self.config.num_workers)
-    return dataset
+#     dataset = TensorDataset(queries, results, rtgs, mask_lengths)
+#     #self.data_loader = DataLoader(dataset, batch_size=self.config.batch_size, shuffle=True, num_workers=self.config.num_workers)
+#     return dataset
+
+
+
+
+
+##### for test on repeated data for sanity check
+
+def dataset():
+    if config.repeated_dataset:
+            # Keep only the first 10 unique samples
+        N_unique = 10000
+        repeat_factor = 1 # how many times to repeat them
+        with h5py.File(config.dataset_path, "r") as f:
+            queries = torch.tensor(f["queries"][: N_unique], dtype=torch.float32)
+            results = torch.tensor(f["results"][: N_unique], dtype=torch.float32)
+            rtgs = torch.tensor(f["rtgs"][: N_unique], dtype=torch.float32)
+            mask_lengths = torch.tensor(f["mask_lengths"][: N_unique], dtype=torch.long)
+
+        # Print shapes for debugging
+        print("queries shape before repeat:", queries.shape)
+
+
+        if results.ndim == 1:
+            results = results.unsqueeze(0)
+        if rtgs.ndim == 1:
+            rtgs = rtgs.unsqueeze(0)
+
+
+        queries = queries[:N_unique].repeat(repeat_factor, 1, 1)
+        results = results[:N_unique].repeat(repeat_factor, 1)
+        rtgs = rtgs[:N_unique].repeat(repeat_factor, 1)
+        mask_lengths = mask_lengths[:N_unique].repeat(repeat_factor)
+
+        print(f"Dataset shape after repeat: {queries.shape}")
+
+        dataset = TensorDataset(queries, results, rtgs, mask_lengths)
+        return dataset
+    
+
+    else:
+            #"""Load dataset from HDF5 file and create DataLoader."""
+        with h5py.File(config.dataset_path, "r") as f:
+            queries = torch.tensor(f["queries"][:], dtype=torch.float32)
+            results = torch.tensor(f["results"][:], dtype=torch.float32)
+            rtgs = torch.tensor(f["rtgs"][:], dtype=torch.float32)
+            mask_lengths = torch.tensor(f["mask_lengths"][:], dtype=torch.long)
+
+        dataset = TensorDataset(queries, results, rtgs, mask_lengths)
+        #self.data_loader = DataLoader(dataset, batch_size=self.config.batch_size, shuffle=True, num_workers=self.config.num_workers)
+        return dataset
+
+
+
+
+
+
+
 
 def setup_distributed():
     local_rank = int(os.environ["LOCAL_RANK"])
