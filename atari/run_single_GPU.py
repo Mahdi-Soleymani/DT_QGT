@@ -42,7 +42,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--seed', type=int, default=123, help='Random seed for reproducibility')
 parser.add_argument('--epochs', type=int, default=10, help='Number of epochs to train')
 parser.add_argument('--batch_size', type=int, default=128, help='Batch size')
-parser.add_argument('--learning_rate', type=float, default=1e-1, help='Learning rate')
+parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate')
 parser.add_argument('--betas', type=tuple, default=(0.9, 0.95), help='Betas for Adam optimizer')
 parser.add_argument('--grad_norm_clip', type=float, default=1.0, help='Gradient norm clipping')
 parser.add_argument('--weight_decay', type=float, default=0.1, help='Weight decay for optimizer')
@@ -65,6 +65,7 @@ parser.add_argument('--pad_vec_val', type=float, default=-30, help='Padding vect
 parser.add_argument('--dataset_path', type=str, default="atari/data_6e6.h5", help='Path to Dataset')
 parser.add_argument('--criterion', type=str, default='bce', help='Loss criterion (e.g., mse, mae)')
 parser.add_argument('--clip_grad', type=bool, default=False, help='Whether to apply gradient clipping')
+parser.add_argument('--wandb', type=bool, default=False, help='Whether to apply gradient clipping')
 
 # Parse arguments
 args = parser.parse_args()
@@ -101,7 +102,8 @@ config = t.TrainerConfig(
     seed=args.seed,
     dataset_path=args.dataset_path,
     criterion=args.criterion,
-    clip_grad=args.clip_grad
+    clip_grad=args.clip_grad,
+    wb=args.wandb
 )
 
 def dataset():
@@ -159,8 +161,10 @@ model = m.DecisionTransformer(config)
 model = model.to(device)
 dataset= dataset()
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=config.batch_size, shuffle=True)
-wandb.init(project="DT", config=config)
-#wandb.init(mode="disabled")
+if config.wb:
+    wandb.init(project="DT", config=config)
+else:
+    wandb.init(mode="disabled")
 trainer = t.Trainer(model=model, dataloader=dataloader, device=device, rank=0,config=config, single_GPU=True)
 trainer.train()
 

@@ -51,9 +51,21 @@ class CausalSelfAttention(nn.Module):
         att = att.masked_fill(self.mask[:,:,:T,:T] == 0, float('-inf'))
         
         # Apply additional custom mask (if provided)
-        if attention_mask is not None:
-            att = att.masked_fill(attention_mask[:, None, :, :] == 0, float('-inf'))  # Broadcast across heads
+        # if attention_mask is not None:
+        #     att = att.masked_fill(attention_mask[:, None, :, :] == 0, float('-inf'))  # Broadcast across heads
 
+
+        if attention_mask is not None:
+            # if attention_mask.dim() == 2:  # Padding mask [B, T]
+            #     attention_mask = attention_mask.unsqueeze(1) & attention_mask.unsqueeze(2)  # [B, 1, T, T]
+            attention_mask = attention_mask.bool()
+            att = att.masked_fill(attention_mask[:, None, :, :] == 0, float('-inf'))
+
+
+
+
+
+        att = torch.clamp(att, min=-1e4, max=1e4)
         att = F.softmax(att, dim=-1)
         att = self.attn_drop(att)
         y = att @ v
@@ -96,8 +108,8 @@ class Block(nn.Module):
             nn.Linear(4 * config.n_embd, config.n_embd), nn.Dropout(config.resid_pdrop)
         )
 
-    def forward(self, x, attention_mask):
-        x = x + self.attn(self.ln1(x))
+    def forward(self, x, attention_mask=None):
+        x = x + self.attn(self.ln1(x), attention_mask)
         x = x + self.mlp(self.ln2(x))
 
         # x = x + self.attn(self.masked_layer_norm(x, self.ln1, attention_mask))
@@ -122,6 +134,8 @@ class DecisionTransformer(nn.Module):
 
         # Dropout
         self.drop = nn.Dropout(config.embd_pdrop)
+        self.token_ln = nn.LayerNorm(config.n_embd)
+
 
         # Transformer blocks
         #self.blocks = nn.Sequential(*[Block(config) for _ in range(config.n_layer)])
@@ -140,18 +154,30 @@ class DecisionTransformer(nn.Module):
         return self.block_size
 
     def _init_weights(self, module):
-        if isinstance(module, (nn.Linear, nn.Embedding)):
+        if isinstance(module, (nn.Linear)):
             module.weight.data.normal_(mean=0.0, std=0.02)
-            if isinstance(module, nn.Linear) and module.bias is not None:
+            if  module.bias is not None:
                 module.bias.data.zero_()
+
+        if isinstance(module,  nn.Embedding):
+            module.weight.data.normal_(mean=0.0, std=1)
+ 
+        
+## original 
+
+        # if isinstance(module, (nn.Linear, nn.Embedding)):
+        #     module.weight.data.normal_(mean=0.0, std=0.02)
+        #     if isinstance(module, nn.Linear) and module.bias is not None:
+        #         module.bias.data.zero_()        
+
         elif isinstance(module, nn.LayerNorm):
             module.bias.data.zero_()
             module.weight.data.fill_(1.0)
 
     def configure_optimizers(self, config):
     # Define the optimizer (e.g., Adam)
-        #optimizer = optim.Adam(self.parameters(), lr=config.learning_rate)
-        optimizer = torch.optim.SGD(self.parameters(), lr=config.learning_rate)
+        optimizer = optim.Adam(self.parameters(), lr=config.learning_rate)
+        #optimizer = torch.optim.SGD(self.parameters(), lr=config.learning_rate)
 
         return optimizer  # Or return (optimizer, scheduler) if you use a scheduler
 
@@ -204,16 +230,33 @@ class DecisionTransformer(nn.Module):
 
         position_embeddings = self.pos_emb[:, :token_embeddings.shape[1], :]
 
-        x = self.drop(token_embeddings + position_embeddings)
+        #x = self.drop(token_embeddings + position_embeddings)
+        x = self.token_ln(token_embeddings + position_embeddings)
+        x = self.drop(x)
+
+     
+        if triplet_mask.dim() == 3:  # [B, T, 1]
+            triplet_mask = triplet_mask.squeeze(-1)  # [B, T]
+
+        # Now expand to [B, T, T]
+        expanded_mask = triplet_mask.unsqueeze(1) & triplet_mask.unsqueeze(2)
+        #expanded_mask = expanded_mask.bool()
+
+        # print(expanded_mask[0]) 
+        # print(expanded_mask.shape) 
+        # time.sleep(100)
 
         # Pass through transformer blocks
         #x = self.blocks(x,triplet_mask)
         for block in self.blocks:
-            x = block(x, triplet_mask)
+            x = block(x, expanded_mask)
+            #x = block(x)
 
+        # print(x)
+        # time.sleep(100)
 
-        # Final LayerNorm
-        x = self.ln_f(x)
+        # # Final LayerNorm
+        # x = self.ln_f(x)
 
         # Output layer to predict next action (query)
         logits = self.head(x)
@@ -221,12 +264,14 @@ class DecisionTransformer(nn.Module):
         #time.sleep(1)
         if queries is not None:
             logits = logits[:, 1::3, :] # only keep predictions from query_embeddings
-        elif queries is None:
-            logits = logits[:, 1:, :]
+        # elif queries is None:
+        #     logits = logits[:, 1:, :]
             
-
+        
         probabilities = torch.sigmoid(logits)  # Apply sigmoid to get probabilities in range [0, 1]
-
+        # print(targets.shape)
+        # print(logits.shape)
+        # time.sleep(100)
         loss = None
         if targets is not None:
 
@@ -248,7 +293,7 @@ class DecisionTransformer(nn.Module):
             # Create mask of shape (block_size, k)
             mask = torch.zeros_like(logits, device=logits.device)
             for i in range(logits.shape[0]):
-                mask[i,:mask_length[i]-1, :] = 1  # Set first mask_length rows to 1
+                mask[i,:mask_length[i]-2, :] = 1  # Set first mask_length rows to 1
 
             # Apply mask: Keep only the relevant losses
             loss = loss * mask  # Zero out the masked parts
