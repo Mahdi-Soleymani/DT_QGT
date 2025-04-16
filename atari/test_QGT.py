@@ -2,7 +2,7 @@ import torch
 import sys
 import time
 sys.path.append("mingpt/")  # Adjust if needed
-import atari.mingpt.trainer_QGT_on_the_fly as t
+import mingpt.trainer_QGT as t
 # Import your model class
 #from model_QGT import model
 import numpy as np
@@ -74,10 +74,10 @@ def test_sample():
         lr_decay = False,
         warmup_tokens = 375e6,
         final_tokens = 260e9,
-        ckpt_path="dt_model_checkpoint.pth",  # Set a valid path if you want to save checkpoints
+        ckpt_path="comic-mountain-67.pth",  # Set a valid path if you want to save checkpoints
         num_workers=0,
         rtg_dim=1,
-        n_embd=128,
+        n_embd=512,
         query_result_dim=1,
         block_size=10,### number of max timesteps in sequence (seq len=3 times this)
         embd_pdrop = 0.1,
@@ -95,7 +95,7 @@ def test_sample():
     DT_model = QGT_model(config)  # Use the same configuration used during training
 
     # Load the saved model checkpoint
-    checkpoint = torch.load("dt_model_checkpoint.pth")
+    checkpoint = torch.load("comic-mountain-67.pth",  map_location=torch.device("cpu"))
     # Load the model weights directly from the checkpoint
     DT_model.load_state_dict(checkpoint)
 
@@ -165,7 +165,8 @@ def test_sample():
         with torch.no_grad():  # No need to track gradients during inference
 
 
-            probs,_=DT_model( mask_length, rtgs,  results, queries)
+            #probs,_=DT_model( mask_length, rtgs,  results, queries)
+            probs = torch.randint(0, 2, (config.batch_size, config.block_size, config.k)).float()
 
 
             ######## Random queries
@@ -179,21 +180,35 @@ def test_sample():
             # print(queries)
             # time.sleep(5)
             # print(probs)
-        ###Sampling (soft)
-            
         
-
-        next_query = torch.bernoulli(probs[:,num_of_constraints,:])
+        
+        
+        ###Sampling (soft)
+        #next_query = torch.bernoulli(probs[:,num_of_constraints,:])
+       
         ### hard thresholding
-        #next_query = (probs > 0.5).float()
+        #print("probs")
+
+        #probs=probs[:,num_of_constraints,:]
+
+        #print(probs)
+        next_query = (probs > 0.5).float()
         #print (probs[:,num_of_constraints,:])
 
-        queries[:,num_of_constraints,:]=next_query
+        ### When using model
+        #next_query=next_query[0,:]
+        
 
+        #when using random
+        next_query=next_query[0,0,:]
+        #print(next_query)
+       
+        queries[:,num_of_constraints,:]=next_query
+        
 
         selected_variables=[]
         for i in range(config.k):
-            if next_query[:,i]==1:
+            if next_query[i]==1:
                 selected_variables.append(variables[i])
 
         new_result=torch.matmul(next_query,x_half_tensor)
@@ -238,8 +253,9 @@ def test_sample():
     #return (probs[:,num_of_constraints-1,:])
 
 results=[]
-for _ in range(10):
+for l in range(1000):
     results.append(test_sample())
+    print(l)
 
 print(np.array(results).mean())
 print(np.array(results).std())
