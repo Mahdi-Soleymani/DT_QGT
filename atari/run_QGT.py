@@ -215,7 +215,7 @@ def main():
     model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=True)
 
     data = dataset()
-    sampler = DistributedSampler(data, num_replicas=world_size, rank=rank)
+    sampler = DistributedSampler(data, num_replicas=world_size, rank=rank, shuffle=True)
     dataloader = DataLoader(data, batch_size=config.batch_size, sampler=sampler)
 
     if rank==0:

@@ -208,8 +208,18 @@ class Trainer:
 
                     with torch.no_grad():
                         preds = (probabilities > 0.5).float()            # Binary predictions
-                        acc = (preds == q).float().mean()  # Accuracy over all tokens
-                    
+                        total_correct = 0.0
+                        total_tokens = 0
+
+                        for i in range(preds.size(0)):  # loop over batch
+                            valid_len = mask_lengths[i].item()-1
+                            total_correct += (preds[i, :valid_len] == q[i, :valid_len]).float().sum()
+
+                            total_tokens += valid_len
+
+                        acc = total_correct / (self.config.k*total_tokens)
+                        print(acc)
+                        time.sleep(1)
                     wandb.log({
                         "accuracy": acc.item(),
                         "lr": lr,
