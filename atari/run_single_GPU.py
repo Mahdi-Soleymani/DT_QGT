@@ -66,6 +66,8 @@ parser.add_argument('--dataset_path', type=str, default="atari/data_6e6.h5", hel
 parser.add_argument('--criterion', type=str, default='bce', help='Loss criterion (e.g., mse, mae)')
 parser.add_argument('--clip_grad', type=bool, default=True, help='Whether to apply gradient clipping')
 parser.add_argument('--wandb', type=bool, default=False, help='Whether to apply gradient clipping')
+parser.add_argument('--label_smoothing', type=float, default=0.1,
+                    help='Label smoothing factor for binary targets (0.0 = no smoothing)')
 
 # Parse arguments
 args = parser.parse_args()
@@ -103,7 +105,8 @@ config = t.TrainerConfig(
     dataset_path=args.dataset_path,
     criterion=args.criterion,
     clip_grad=args.clip_grad,
-    wb=args.wandb
+    wb=args.wandb,
+    label_smoothing=args.label_smoothing
 )
 
 def dataset():

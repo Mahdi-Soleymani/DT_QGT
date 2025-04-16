@@ -66,6 +66,8 @@ parser.add_argument('--pad_vec_val', type=float, default=-30, help='Padding vect
 parser.add_argument('--dataset_path', type=str, default="atari/data_6e6.h5", help='Path to Dataset')
 parser.add_argument('--criterion', type=str, default='bce', help='Loss criterion (e.g., mse, mae)')
 parser.add_argument('--clip_grad', type=bool, default=False, help='Whether to apply gradient clipping')
+parser.add_argument('--label_smoothing', type=float, default=0.0,
+                    help='Label smoothing factor for binary targets (0.0 = no smoothing)')
 
 
 # Parse arguments
@@ -102,7 +104,8 @@ config = t.TrainerConfig(
     pad_vec_val=args.pad_vec_val,
     seed=args.seed,
     criterion=args.criterion,
-    clip_grad=args.clip_grad
+    clip_grad=args.clip_grad,
+    label_smoothing=args.label_smoothing
 )
 
 

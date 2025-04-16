@@ -282,6 +282,9 @@ class DecisionTransformer(nn.Module):
         # time.sleep(100)
         loss = None
         if targets is not None:
+            if self.config.label_smoothing > 0.0:
+                targets = targets * (1 - self.config.label_smoothing) + 0.5 * self.config.label_smoothing
+
 
             if self.config.criterion=="bce":
                 loss_fn = nn.BCEWithLogitsLoss(reduction="none")
