@@ -48,7 +48,7 @@ parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning 
 parser.add_argument('--betas', type=tuple, default=(0.9, 0.95), help='Betas for Adam optimizer')
 parser.add_argument('--grad_norm_clip', type=float, default=1.0, help='Gradient norm clipping')
 parser.add_argument('--weight_decay', type=float, default=0.1, help='Weight decay for optimizer')
-parser.add_argument('--lr_decay', type=bool, default=True, help='Whether to apply learning rate decay')
+parser.add_argument('--no_lr_decay', action='store_false', dest='lr_decay', help='Whether to apply learning rate decay')
 parser.add_argument('--warmup_tokens', type=float, default=18e6, help='Number of warmup tokens')
 parser.add_argument('--final_tokens', type=float, default=18e8, help='Total number of tokens for training')
 parser.add_argument('--num_workers', type=int, default=0, help='Number of workers for data loading')
@@ -65,10 +65,10 @@ parser.add_argument('--pad_scalar_val', type=float, default=-10, help='Padding s
 parser.add_argument('--pad_vec_val', type=float, default=-30, help='Padding vector value')
 parser.add_argument('--dataset_path', type=str, default="atari/data_6e6.h5", help='Path to Dataset')
 parser.add_argument('--criterion', type=str, default='bce', help='Loss criterion (e.g., mse, mae)')
-parser.add_argument('--clip_grad', type=bool, default=False, help='Whether to apply gradient clipping')
+parser.add_argument('--no_clip_grad', action='store_false', dest='clip_grad', help='Whether to apply gradient clipping')
 parser.add_argument('--label_smoothing', type=float, default=0.0,
                     help='Label smoothing factor for binary targets (0.0 = no smoothing)')
-parser.add_argument('--repeated_dataset', type=bool, default=False, help='Whether to use small repeated dataset')
+parser.add_argument('--repeated_dataset', action='store_true',  help='Whether to use small repeated dataset')
 
 
 # Parse arguments
