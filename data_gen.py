@@ -316,14 +316,16 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--n_cores", type=int, default=4, help="Number of CPU cores to use")
     parser.add_argument('--num_samples', type=int, default=1000000, help='Total number of samples to generate')
+    parser.add_argument('--file_name', type=str, default="dataset", help='Total number of samples to generate')
 
     args = parser.parse_args()
 
     n_cores = min(args.n_cores, os.cpu_count())
     num_samples = args.num_samples
-    save_dataset_parallel("final_output.h5", num_samples, seq_fn, config, n_cores)
-    count_samples_in_h5("final_output.h5")
-    file_path = 'final_output.h5'
+    f_name=args.file_name
+    save_dataset_parallel(f"{f_name}.h5", num_samples, seq_fn, config, n_cores)
+    count_samples_in_h5(f"{f_name}.h5")
+    file_path = f"{f_name}.h5"
 
     file_size = os.path.getsize(file_path)
 
