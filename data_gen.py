@@ -122,7 +122,7 @@ def seq_fn(k,max_len, pad_scalar_val,pad_vec_val):
                 if num_of_solutions<=1:
                     is_solved=True
                     rwrd.append(0)
-                    r.append(int(new_result))
+                    r.append(int(new_result[0]))
                     
                     
                 else:
