@@ -11,6 +11,7 @@ from gurobipy import GRB, LinExpr
 from torch.nn import functional as F
 import gurobipy as gp
 
+import matplotlib.pyplot as plt
 
 
 
@@ -94,8 +95,12 @@ def test_sample():
     # Initialize your model architecture (it should be the same as during training)
     DT_model = QGT_model(config)  # Use the same configuration used during training
 
-    # Load the saved model checkpoint
-    checkpoint = torch.load("comic-mountain-67.pth",  map_location=torch.device("cpu"))
+    # Load the saved model checkpoint  
+    
+    #checkpoint = torch.load("comic-mountain-67.pth",  map_location=torch.device("cpu"))
+    #checkpoint = torch.load("zany-hill-68.pth",  map_location=torch.device("cpu"))
+    checkpoint = torch.load("misunderstood-serenity-69.pth",  map_location=torch.device("cpu"))
+
     # Load the model weights directly from the checkpoint
     DT_model.load_state_dict(checkpoint)
 
@@ -165,8 +170,8 @@ def test_sample():
         with torch.no_grad():  # No need to track gradients during inference
 
 
-            #probs,_=DT_model( mask_length, rtgs,  results, queries)
-            probs = torch.randint(0, 2, (config.batch_size, config.block_size, config.k)).float()
+            probs,_=DT_model( mask_length, rtgs,  results, queries)
+            #probs = torch.randint(0, 2, (config.batch_size, config.block_size, config.k)).float()
 
 
             ######## Random queries
@@ -184,23 +189,21 @@ def test_sample():
         
         
         ###Sampling (soft)
-        #next_query = torch.bernoulli(probs[:,num_of_constraints,:])
+        next_query = torch.bernoulli(probs[:,num_of_constraints,:])
        
         ### hard thresholding
         #print("probs")
 
-        #probs=probs[:,num_of_constraints,:]
+        probs=probs[:,num_of_constraints,:]
 
-        #print(probs)
-        next_query = (probs > 0.5).float()
+        #next_query = (probs > 0.5).float()
         #print (probs[:,num_of_constraints,:])
 
-        ### When using model
-        #next_query=next_query[0,:]
-        
+        #when using model 
+        next_query=next_query[0,:]
 
         #when using random
-        next_query=next_query[0,0,:]
+        #next_query=next_query[0,0,:]
         #print(next_query)
        
         queries[:,num_of_constraints,:]=next_query
@@ -228,7 +231,7 @@ def test_sample():
 
         # Check the initial solution
         if G_model.status == GRB.OPTIMAL:
-            # Get the total number of solutions
+            # Get the total number of sn        olutions
             num_of_solutions=G_model.SolCount
             if num_of_solutions<=1:
                 is_solved=True
@@ -241,40 +244,19 @@ def test_sample():
         else:
             print(f"No solution found!")
 
-        # print(f"number of constraints: {num_of_constraints}")
-        # print(rtgs)
-        # print(results)
-        # print(queries)
-        # print(probs)
-
-
-    # print(f"The problem is solved {is_solved}")
     return num_of_constraints+1
-    #return (probs[:,num_of_constraints-1,:])
 
 results=[]
 for l in range(1000):
     results.append(test_sample())
     print(l)
 
-print(np.array(results).mean())
-print(np.array(results).std())
+
+results=np.array(results)
+print(results.mean())
+print(results.std())
 
 
-
-# predictions=[]
-# num_samples=100
-# vector_size=10
-# data = torch.zeros((num_samples, vector_size))
-# for i in range(num_samples):
-#     data[i] = torch.rand(vector_size)  # Replace with your values
-
-# # Compute mean and variance along each coordinate (dim=0)
-# mean = torch.mean(data, dim=0)
-# variance = torch.var(data, dim=0)
-
-# print("Mean:", mean)
-# print("Variance:", variance)
 
 
 
