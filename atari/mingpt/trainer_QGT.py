@@ -275,10 +275,10 @@ class Trainer:
 
 
    
-            # Make sure all ranks wait before continuing
-            print(f"[Rank {dist.get_rank()}] Finished epoch {epoch_num}, entering barrier")
-            dist.barrier()
-            print(f"[Rank {dist.get_rank()}] Passed barrier, starting epoch {epoch_num+1}")
+            # # Make sure all ranks wait before continuing
+            # print(f"[Rank {dist.get_rank()}] Finished epoch {epoch_num}, entering barrier")
+            # dist.barrier()
+            # print(f"[Rank {dist.get_rank()}] Passed barrier, starting epoch {epoch_num+1}")
 
 
         # Initialize wandb
