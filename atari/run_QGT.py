@@ -241,13 +241,13 @@ def main():
     val_loader = DataLoader(val_data, batch_size=config.batch_size, shuffle=False)  # No sampler at all
 
     
-    dataset_size = len(data) 
+   
     if rank==0:
         #wandb.init(mpde="disabled")
         wandb.init(project="DT", config=config)
         print(f"Total dataset size: {len(data)} samples")
 
-    num_of_total_tokens=dataset_size*config.block_size*3*config.max_epochs
+    num_of_total_tokens=train_size*config.block_size*3*config.max_epochs
     warm_up_tokens=int(0.01*num_of_total_tokens)
 
     config.warmup_tokens=warm_up_tokens
