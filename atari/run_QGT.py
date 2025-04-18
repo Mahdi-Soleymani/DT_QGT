@@ -140,7 +140,7 @@ config.query_dim=config.k
 def dataset():
     if config.repeated_dataset:
             #### Keep only the first 10 unique samples
-        N_unique = int(100)
+        N_unique = int(1000)
         repeat_factor = 1 # how many times to repeat them
         with h5py.File(config.dataset_path, "r") as f:
             queries = torch.tensor(f["queries"][: N_unique], dtype=torch.float32)
@@ -226,7 +226,7 @@ def main():
     model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=True)
 
     data = dataset()
-    val_size = int(max(min((len(data) * 0.001),10000),10))
+    val_size = int(max(min((len(data) * 0.001),10000),100))
     train_size = len(data) - val_size
     generator = torch.Generator().manual_seed(73)
     train_data, val_data = random_split(data, [train_size, val_size], generator=generator)
