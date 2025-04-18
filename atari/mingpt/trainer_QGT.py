@@ -186,7 +186,7 @@ class Trainer:
                         # Log loss and gradients to WandB
                         wandb.log({
                             "loss": loss.item(),
-                            "epoch": epoch
+                            "epoch": epoch_num
                         })
 
                                 # Log gradient norms
@@ -267,7 +267,7 @@ class Trainer:
                 return test_loss
             
             avg_loss = float(np.mean(losses))
-            logger.info("Epoch %d - Avg Loss: %f", epoch + 1, avg_loss)
+            logger.info("Epoch %d - Avg Loss: %f", epoch_num + 1, avg_loss)
 
             if self.rank==0:
                 self.save_checkpoint()
@@ -278,13 +278,13 @@ class Trainer:
 
 
             if self.rank==0:
-                self.validate(epoch) 
+                self.validate(epoch_num) 
            
            
             # Another barrier to ensure validation doesn’t race
-        print(f"[Rank {dist.get_rank()}] Finished epoch {epoch}, entering barrier")
-        dist.barrier()
-        print(f"[Rank {dist.get_rank()}] Passed barrier, starting epoch {epoch+1}")
+            print(f"[Rank {dist.get_rank()}] Finished epoch {epoch_num}, entering barrier")
+            dist.barrier()
+            print(f"[Rank {dist.get_rank()}] Passed barrier, starting epoch {epoch_num+1}")
 
 
         # Initialize wandb
