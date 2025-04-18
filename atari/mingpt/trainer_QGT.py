@@ -124,9 +124,9 @@ class Trainer:
         val_loss=float(np.mean(losses_val))
          
 
-       
-        print(f"[Validation] Epoch {epoch}: Loss = {val_loss:.4f}")
-        wandb.log({"val/accuracy": val_acc, "val/loss":val_loss})
+        if self.rank == 0:
+            print(f"[Validation] Epoch {epoch}: Loss = {val_loss:.4f}")
+            wandb.log({"val/accuracy": val_acc, "val/loss":val_loss})
 
         self.model.train()
 
@@ -267,23 +267,14 @@ class Trainer:
             avg_loss = float(np.mean(losses))
             logger.info("Epoch %d - Avg Loss: %f", epoch_num + 1, avg_loss)
 
-            # if self.rank==0:
-            #     self.save_checkpoint()
-            #     print("check_point saved")
-            #     self.validate(epoch_num) 
+            if self.rank==0:
+                self.save_checkpoint()
+                print("check_point saved")
+            
+            self.validate(epoch_num) 
 
 
-            if self.rank == 0:
-                try:
-                    self.save_checkpoint()
-                    print(f"[Rank 0] Checkpoint saved. Starting validation...")
-                    self.validate(epoch_num)
-                    print(f"[Rank 0] Finished validation.")
-                except Exception as e:
-                    print(f"[Rank 0] Validation crashed: {e}")
-                    import traceback
-                    traceback.print_exc()
-
+   
             # Make sure all ranks wait before continuing
             print(f"[Rank {dist.get_rank()}] Finished epoch {epoch_num}, entering barrier")
             dist.barrier()
