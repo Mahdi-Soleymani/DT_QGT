@@ -69,6 +69,7 @@ def seq_fn(k,max_len, pad_scalar_val,pad_vec_val):
     while True:
         x,x_half=random_integer_vector(k)
         model = Model("Incremental_ILP")
+        model.setParam(GRB.Param.Threads, 1)
         #### to write nothing in the log 
         model.setParam(GRB.Param.OutputFlag, 0)
         # Create a list to store the variables for ILP
@@ -312,7 +313,8 @@ if __name__ == '__main__':
     from concurrent.futures import ProcessPoolExecutor
     import argparse
     import os
-
+    import multiprocessing as mp
+    mp.set_start_method("spawn", force=True)
     parser = argparse.ArgumentParser()
     parser.add_argument("--n_cores", type=int, default=4, help="Number of CPU cores to use")
     parser.add_argument('--num_samples', type=int, default=1000000, help='Total number of samples to generate')

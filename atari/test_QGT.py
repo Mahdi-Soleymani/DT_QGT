@@ -12,7 +12,7 @@ from torch.nn import functional as F
 import gurobipy as gp
 
 import matplotlib.pyplot as plt
-
+import os
 
 
 
@@ -33,7 +33,11 @@ def random_integer_vector(k):
 
 def pad_sequence(seq, max_len, pad_value=0):
     """Pads a sequence to max_len with pad_value"""
+
     seq = torch.tensor(seq, dtype=torch.float32)  # Convert to tensor
+
+
+
     pad_size = max_len - seq.shape[0]
 
     if pad_size > 0:
@@ -45,9 +49,10 @@ def pad_sequence(seq, max_len, pad_value=0):
 
 def pad_sequence2d(seq, max_len, pad_value=0):
     """Pads a batch of sequences to max_len with pad_value"""
-    
+
     # Convert the list of lists into a tensor
-    seq = [torch.tensor(q, dtype=torch.float32) for q in seq]  # Convert each query to a tensor
+    #seq = [torch.tensor(q, dtype=torch.float32) for q in seq]  # Convert each query to a tensor
+    seq = [q.clone().detach().to(dtype=torch.float32) for q in seq]
     # Stack into a 2D tensor (batch_size, seq_len)
     seq = torch.stack(seq)  # Shape: (batch_size, query_length)
     
@@ -60,7 +65,7 @@ def pad_sequence2d(seq, max_len, pad_value=0):
 
 
 
-def test_sample():
+def test_sample(desired_num_of_queries):
     # Initialize the model and config
     config = t.TrainerConfig(
         k=10,
@@ -88,10 +93,10 @@ def test_sample():
         resid_pdrop=0.1,
         pad_scalar_val=-100,
         pad_vec_val=-30,
-        desired_num_of_queries=5
+        desired_num_of_queries=8
     )
     config.query_dim=config.k
-
+    config.desired_num_of_queries=desired_num_of_queries
     # Initialize your model architecture (it should be the same as during training)
     DT_model = QGT_model(config)  # Use the same configuration used during training
 
@@ -99,7 +104,8 @@ def test_sample():
     
     #checkpoint = torch.load("comic-mountain-67.pth",  map_location=torch.device("cpu"))
     #checkpoint = torch.load("zany-hill-68.pth",  map_location=torch.device("cpu"))
-    checkpoint = torch.load("misunderstood-serenity-69.pth",  map_location=torch.device("cpu"))
+    #checkpoint = torch.load("misunderstood-serenity-69.pth",  map_location=torch.device("cpu"))
+    checkpoint = torch.load("morning-vortex-71.pth",  map_location='cpu', weights_only=True)
 
     # Load the model weights directly from the checkpoint
     DT_model.load_state_dict(checkpoint)
@@ -121,12 +127,14 @@ def test_sample():
     rtgs=(pad_sequence(rtg, max_len,pad_scalar_val))
 
 
-
-    results = torch.tensor(results).to(device)
-    rtgs = torch.tensor(rtgs).to(device)
     mask_length = torch.tensor(mask_length).to(device)
-    queries = torch.tensor(queries).to(device)
-    # problem_instances=torch.stack(problem_instance)
+    results = results.to(device)
+    rtgs    = rtgs.to(device)
+    queries = queries.to(device)
+
+
+
+
 
 
     x,x_half=random_integer_vector(config.k)
@@ -153,7 +161,6 @@ def test_sample():
 
     # Set the objective (e.g., maximize x + y)
     G_model.setObjective(1 , GRB.MAXIMIZE)
-    #G_model.optimize()
 
 
     num_of_constraints=0
@@ -164,28 +171,18 @@ def test_sample():
     queries = queries.unsqueeze(0)
     mask_length = mask_length.unsqueeze(0)  # Adds batch dimension, result shape: [1, 10, 10]
 
-
     while not is_solved and num_of_constraints<config.block_size:
 
         with torch.no_grad():  # No need to track gradients during inference
 
-
+            ### from model
             probs,_=DT_model( mask_length, rtgs,  results, queries)
-            #probs = torch.randint(0, 2, (config.batch_size, config.block_size, config.k)).float()
 
 
             ######## Random queries
-            #probs=.5*torch.ones(config.batch_size,config.block_size,config.k)
-            # print(mask_length)
-            # print("\n")
-            # print(rtgs)
-            # print("\n")
-            # print(results)
-            # print("\n")
-            # print(queries)
-            # time.sleep(5)
-            # print(probs)
-        
+            #probs=.5*torch.ones(config.batch_size,config.block_size,config.k).float()
+            #probs = torch.randint(0, 2, (config.batch_size, config.block_size, config.k)).float()
+
         
         
         ###Sampling (soft)
@@ -194,7 +191,7 @@ def test_sample():
         ### hard thresholding
         #print("probs")
 
-        probs=probs[:,num_of_constraints,:]
+        #probs=probs[:,num_of_constraints,:]
 
         #next_query = (probs > 0.5).float()
         #print (probs[:,num_of_constraints,:])
@@ -207,7 +204,7 @@ def test_sample():
         #print(next_query)
        
         queries[:,num_of_constraints,:]=next_query
-        
+
 
         selected_variables=[]
         for i in range(config.k):
@@ -224,7 +221,8 @@ def test_sample():
     
         G_model.addConstr(constraint, name=f"{num_of_constraints}")
         num_of_constraints+=1
-
+ 
+    
         
         # Optimize the initial model
         G_model.optimize()
@@ -243,23 +241,54 @@ def test_sample():
                 
         else:
             print(f"No solution found!")
-
-    return num_of_constraints+1
-
-results=[]
-for l in range(1000):
-    results.append(test_sample())
-    print(l)
-
-
-results=np.array(results)
-print(results.mean())
-print(results.std())
+        
 
 
 
+    return num_of_constraints
 
 
+
+def run_test_sample(des_len,_):
+    return test_sample(des_len)
+
+
+
+def main():
+    import concurrent.futures
+    from tqdm import tqdm
+    import argparse
+    from functools import partial
+
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--num_iter", type=int, default=1000, help="Number of iterations")
+    parser.add_argument("--num_cores", type=int, default=6, help="Number of CPU cores to use")
+    parser.add_argument("--des_len", type=int, default=3, help="Number of CPU cores to use")
+
+    args = parser.parse_args()
+    worker_fn = partial(run_test_sample, args.des_len)
+
+    inputs = [args.des_len] * args.num_iter  # 👈 make it iterable!
+
+
+    with concurrent.futures.ProcessPoolExecutor(max_workers=args.num_cores) as executor:
+        results = list(tqdm(executor.map(worker_fn,range(args.num_iter)), total=args.num_iter))
+
+    # results=[]
+    # for l in range(1000):
+    #     results.append(test_sample())
+    #     print(l)
+
+
+    results=np.array(results)
+    print(results.mean())
+    print(results.std())
+
+
+if __name__ == "__main__":
+
+    main()
 
 
 
