@@ -108,7 +108,8 @@ config = t.TrainerConfig(
     criterion=args.criterion,
     clip_grad=args.clip_grad,
     label_smoothing=args.label_smoothing,
-    repeated_dataset=args.repeated_dataset
+    repeated_dataset=args.repeated_dataset,
+    resume_ckpt_path=args.resume_ckpt_path
 )
 
 
