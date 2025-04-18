@@ -105,7 +105,8 @@ def test_sample(desired_num_of_queries):
     #checkpoint = torch.load("comic-mountain-67.pth",  map_location=torch.device("cpu"))
     #checkpoint = torch.load("zany-hill-68.pth",  map_location=torch.device("cpu"))
     #checkpoint = torch.load("misunderstood-serenity-69.pth",  map_location=torch.device("cpu"))
-    checkpoint = torch.load("morning-vortex-71.pth",  map_location='cpu', weights_only=True)
+    #checkpoint = torch.load("morning-vortex-71.pth",  map_location='cpu', weights_only=True)
+    checkpoint = torch.load("dulcet-field-88.pth",  map_location='cpu', weights_only=True)
 
     # Load the model weights directly from the checkpoint
     DT_model.load_state_dict(checkpoint)
