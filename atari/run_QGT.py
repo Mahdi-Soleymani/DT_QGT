@@ -34,7 +34,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 import os
 import h5py
 from torch.utils.data import DataLoader, TensorDataset
-
+from torch.utils.data import random_split
 
 
 # Argument parsing
@@ -223,8 +223,20 @@ def main():
     model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=True)
 
     data = dataset()
-    sampler = DistributedSampler(data, num_replicas=world_size, rank=rank, shuffle=True)
-    dataloader = DataLoader(data, batch_size=config.batch_size, sampler=sampler)
+    val_size = int(np.min((len(data) * 0.001),10000))
+    train_size = len(data) - val_size
+    generator = torch.Generator().manual_seed(73)
+    train_data, val_data = random_split(data, [train_size, val_size], generator=generator)
+
+    train_sampler = DistributedSampler(train_data, num_replicas=world_size, rank=rank, shuffle=True)
+    val_sampler = DistributedSampler(val_data, num_replicas=world_size, rank=rank, shuffle=False)
+
+    # sampler = DistributedSampler(data, num_replicas=world_size, rank=rank, shuffle=True)
+    # dataloader = DataLoader(data, batch_size=config.batch_size, sampler=sampler)
+    train_loader = DataLoader(train_data, batch_size=config.batch_size, sampler=train_sampler)
+    val_loader = DataLoader(val_data, batch_size=config.batch_size, sampler=val_sampler)
+
+    
     dataset_size = len(data) 
     if rank==0:
         #wandb.init(mpde="disabled")
@@ -237,7 +249,7 @@ def main():
     config.warmup_tokens=warm_up_tokens
     config.final_tokens=num_of_total_tokens
 
-    trainer = t.Trainer(model, dataloader, local_rank, rank, config, False)
+    trainer = t.Trainer(model, train_loader,val_loader, local_rank, rank, config, False)
     trainer.train()
 
     cleanup_distributed()
