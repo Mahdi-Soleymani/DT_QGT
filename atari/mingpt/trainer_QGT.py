@@ -41,6 +41,7 @@ class TrainerConfig:
     resid_pdrop=0.1
     pad_scalar_val=-100
     pad_vec_val=0
+    resume_ckpt_path = None
 
 
     def __init__(self, **kwargs):
