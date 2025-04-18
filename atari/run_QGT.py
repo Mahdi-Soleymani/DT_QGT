@@ -223,7 +223,7 @@ def main():
     model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=True)
 
     data = dataset()
-    val_size = int(np.min((len(data) * 0.001),10000))
+    val_size = int(min((len(data) * 0.001),10000))
     train_size = len(data) - val_size
     generator = torch.Generator().manual_seed(73)
     train_data, val_data = random_split(data, [train_size, val_size], generator=generator)
