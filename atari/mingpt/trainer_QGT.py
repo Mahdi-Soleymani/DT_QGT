@@ -161,7 +161,7 @@ class Trainer:
                         "prob_mean": probabilities.mean().item(),
                         "prob_std": probabilities.std().item()
                         },)
-                    dist.barrier()
+                    
 
                     loss = loss.mean()
                     losses.append(loss.item())
@@ -212,7 +212,6 @@ class Trainer:
                             wandb.log({"nonzero_grad_ratio": nonzero_ratio})
 
 
-                    dist.barrier()                                                    
                     
                     
                     optimizer.step()
@@ -259,7 +258,6 @@ class Trainer:
                         "accuracy": acc.item(),
                         "lr": lr,
                     })
-                dist.barrier()
 
             if not is_train:
                 test_loss = float(np.mean(losses))
