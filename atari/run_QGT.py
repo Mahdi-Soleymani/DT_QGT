@@ -140,7 +140,7 @@ config.query_dim=config.k
 def dataset():
     if config.repeated_dataset:
             #### Keep only the first 10 unique samples
-        N_unique = int(100000)
+        N_unique = int(1000000)
         repeat_factor = 1 # how many times to repeat them
         with h5py.File(config.dataset_path, "r") as f:
             queries = torch.tensor(f["queries"][: N_unique], dtype=torch.float32)
@@ -241,17 +241,20 @@ def main():
     val_loader = DataLoader(val_data, batch_size=config.batch_size, shuffle=False)  # No sampler at all
 
     
-   
-    if rank==0:
-        #wandb.init(mpde="disabled")
-        wandb.init(project="DT", config=config)
-        print(f"Total dataset size: {train_size} samples")
 
     num_of_total_tokens=train_size*config.block_size*3*config.max_epochs
     warm_up_tokens=int(0.01*num_of_total_tokens)
 
     config.warmup_tokens=warm_up_tokens
     config.final_tokens=num_of_total_tokens
+
+   
+    if rank==0:
+        #wandb.init(mpde="disabled")
+        wandb.init(project="DT", config=config)
+        print(f"Total dataset size: {train_size} samples")
+
+
 
     trainer = t.Trainer(model, train_loader,val_loader, local_rank, rank, config, False)
     trainer.train()
