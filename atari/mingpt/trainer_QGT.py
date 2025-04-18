@@ -272,12 +272,19 @@ class Trainer:
             if self.rank==0:
                 self.save_checkpoint()
                 print("check_point saved")
+
             # Make sure all ranks wait before continuing
             dist.barrier()
+
+
             if self.rank==0:
                 self.validate(epoch) 
+           
+           
             # Another barrier to ensure validation doesn’t race
-            dist.barrier()      
+        print(f"[Rank {dist.get_rank()}] Finished epoch {epoch}, entering barrier")
+        dist.barrier()
+        print(f"[Rank {dist.get_rank()}] Passed barrier, starting epoch {epoch+1}")
 
 
         # Initialize wandb
