@@ -140,7 +140,7 @@ config.query_dim=config.k
 def dataset():
     if config.repeated_dataset:
             #### Keep only the first 10 unique samples
-        N_unique = int(1e6)
+        N_unique = int(100)
         repeat_factor = 1 # how many times to repeat them
         with h5py.File(config.dataset_path, "r") as f:
             queries = torch.tensor(f["queries"][: N_unique], dtype=torch.float32)
