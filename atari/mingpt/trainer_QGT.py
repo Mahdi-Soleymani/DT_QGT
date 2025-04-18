@@ -272,16 +272,9 @@ class Trainer:
             if self.rank==0:
                 self.save_checkpoint()
                 print("check_point saved")
+                self.validate(epoch_num) 
 
             # Make sure all ranks wait before continuing
-            dist.barrier()
-
-
-            if self.rank==0:
-                self.validate(epoch_num) 
-           
-           
-            # Another barrier to ensure validation doesn’t race
             print(f"[Rank {dist.get_rank()}] Finished epoch {epoch_num}, entering barrier")
             dist.barrier()
             print(f"[Rank {dist.get_rank()}] Passed barrier, starting epoch {epoch_num+1}")
