@@ -214,8 +214,10 @@ def main():
     # ✅ Load checkpoint BEFORE wrapping in DDP
     if config.resume_ckpt_path is not None:
         map_location = {"cuda:%d" % 0: "cuda:%d" % local_rank}
-        checkpoint = torch.load(config.resume_ckpt_path, map_location=map_location)
-        model.load_state_dict(checkpoint["model_state_dict"])
+        #checkpoint = torch.load(config.resume_ckpt_path, map_location=map_location)
+        model.load_state_dict(torch.load(config.resume_ckpt_path, map_location=map_location))
+
+        #model.load_state_dict(checkpoint["model_state_dict"])
         if rank == 0:
             print(f"✅ Loaded checkpoint from {config.resume_ckpt_path}")
 
