@@ -238,7 +238,7 @@ def main():
     # dataloader = DataLoader(data, batch_size=config.batch_size, sampler=sampler)
     train_loader = DataLoader(train_data, batch_size=config.batch_size, sampler=train_sampler)
     #val_loader = DataLoader(val_data, batch_size=config.batch_size, sampler=val_sampler)
-    val_loader = DataLoader(val_data, batch_size=config.batch_size)  # No sampler at all
+    val_loader = DataLoader(val_data, batch_size=config.batch_size, shuffle=False)  # No sampler at all
 
     
     dataset_size = len(data) 
