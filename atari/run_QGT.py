@@ -245,7 +245,7 @@ def main():
     if rank==0:
         #wandb.init(mpde="disabled")
         wandb.init(project="DT", config=config)
-        print(f"Total dataset size: {len(data)} samples")
+        print(f"Total dataset size: {train_size} samples")
 
     num_of_total_tokens=train_size*config.block_size*3*config.max_epochs
     warm_up_tokens=int(0.01*num_of_total_tokens)
