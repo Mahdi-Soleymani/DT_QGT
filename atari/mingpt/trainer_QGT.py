@@ -144,6 +144,8 @@ class Trainer:
         self.tokens = 0  
         def run_epoch(mode,epoch_num=0):
             is_train = mode == 'train'
+            if hasattr(self.dataloader.sampler, "set_epoch"):
+                self.dataloader.sampler.set_epoch(epoch_num)
             model.train(is_train)
             losses = []
             pbar = tqdm(self.dataloader, desc=f"Epoch {epoch_num+1}")            
@@ -159,6 +161,7 @@ class Trainer:
                         "prob_mean": probabilities.mean().item(),
                         "prob_std": probabilities.std().item()
                         },)
+                    dist.barrier()
 
                     loss = loss.mean()
                     losses.append(loss.item())
@@ -194,7 +197,7 @@ class Trainer:
                             if p.requires_grad:
                                 total_norm += p.data.norm(2).item()
                         wandb.log({"total_param_norm": total_norm})
-
+                    
 
                         nonzero_count = 0
                         total_count = 0
@@ -209,7 +212,7 @@ class Trainer:
                             wandb.log({"nonzero_grad_ratio": nonzero_ratio})
 
 
-                                                                        
+                    dist.barrier()                                                    
                     
                     
                     optimizer.step()
@@ -256,7 +259,7 @@ class Trainer:
                         "accuracy": acc.item(),
                         "lr": lr,
                     })
-
+                dist.barrier()
 
             if not is_train:
                 test_loss = float(np.mean(losses))
@@ -269,7 +272,12 @@ class Trainer:
             if self.rank==0:
                 self.save_checkpoint()
                 print("check_point saved")
+            # Make sure all ranks wait before continuing
+            dist.barrier()
+            if self.rank==0:
                 self.validate(epoch) 
+            # Another barrier to ensure validation doesn’t race
+            dist.barrier()      
 
 
         # Initialize wandb
