@@ -125,8 +125,8 @@ config = t.TrainerConfig(
 
 def dataset():
         # Keep only the first 10 unique samples
-    N_unique = 10000
-    repeat_factor = 10 # how many times to repeat them
+    N_unique = 100
+    repeat_factor = 1 # how many times to repeat them
     with h5py.File(config.dataset_path, "r") as f:
         queries = torch.tensor(f["queries"][: N_unique], dtype=torch.float32)
         results = torch.tensor(f["results"][: N_unique], dtype=torch.float32)
@@ -175,13 +175,14 @@ model = model.to(device)
 
 dataset= dataset()
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=config.batch_size, shuffle=True)
+val_dataloader = torch.utils.data.DataLoader(dataset, batch_size=config.batch_size, shuffle=True)
 
 
 if config.wb:
     wandb.init(project="DT", config=config)
 else:
     wandb.init(mode="disabled")
-trainer = t.Trainer(model=model, dataloader=dataloader, device=device, rank=0,config=config, single_GPU=True)
+trainer = t.Trainer(model=model, dataloader=dataloader,val_dataloader=val_dataloader, device=device, rank=0,config=config, single_GPU=True)
 trainer.train()
 
 

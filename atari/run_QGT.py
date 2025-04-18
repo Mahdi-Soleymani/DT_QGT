@@ -63,12 +63,13 @@ parser.add_argument('--attn_pdrop', type=float, default=0.1, help='Attention dro
 parser.add_argument('--resid_pdrop', type=float, default=0.1, help='Residual dropout probability')
 parser.add_argument('--pad_scalar_val', type=float, default=-10, help='Padding scalar value')
 parser.add_argument('--pad_vec_val', type=float, default=-30, help='Padding vector value')
-parser.add_argument('--dataset_path', type=str, default="atari/data_6e6.h5", help='Path to Dataset')
+parser.add_argument('--dataset_path', type=str, default=None, help='Path to Dataset')
 parser.add_argument('--criterion', type=str, default='bce', help='Loss criterion (e.g., mse, mae)')
 parser.add_argument('--no_clip_grad', action='store_false', dest='clip_grad', help='Whether to apply gradient clipping')
 parser.add_argument('--label_smoothing', type=float, default=0.0,
                     help='Label smoothing factor for binary targets (0.0 = no smoothing)')
 parser.add_argument('--repeated_dataset', action='store_true',  help='Whether to use small repeated dataset')
+parser.add_argument("--resume_ckpt_path", type=str, default=None)
 
 
 # Parse arguments
@@ -209,24 +210,32 @@ def main():
     local_rank, rank, world_size = setup_distributed()
     model = m.DecisionTransformer(config).to(local_rank)
 
+    # ✅ Load checkpoint BEFORE wrapping in DDP
+    if config.resume_ckpt_path is not None:
+        map_location = {"cuda:%d" % 0: "cuda:%d" % local_rank}
+        checkpoint = torch.load(config.resume_ckpt_path, map_location=map_location)
+        model.load_state_dict(checkpoint["model_state_dict"])
+        if rank == 0:
+            print(f"✅ Loaded checkpoint from {config.resume_ckpt_path}")
+
  
     
-    #model = DDP(model, device_ids=[local_rank])
     model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=True)
 
     data = dataset()
     sampler = DistributedSampler(data, num_replicas=world_size, rank=rank, shuffle=True)
     dataloader = DataLoader(data, batch_size=config.batch_size, sampler=sampler)
-
+    dataset_size = len(data) 
     if rank==0:
         #wandb.init(mpde="disabled")
         wandb.init(project="DT", config=config)
+        print(f"Total dataset size: {len(data)} samples")
 
+    num_of_total_tokens=dataset_size*config.block_size*3*config.max_epochs
+    warm_up_tokens=int(0.01*num_of_total_tokens)
 
-    print("Trainer is:", Trainer)
-    print("Type:", type(Trainer))
-    import inspect
-    print("Signature:", inspect.signature(Trainer))
+    config.warmup_tokens=warm_up_tokens
+    config.final_tokens=num_of_total_tokens
 
     trainer = t.Trainer(model, dataloader, local_rank, rank, config, False)
     trainer.train()

@@ -52,7 +52,7 @@ class TrainerConfig:
 
 class Trainer:
     
-    def __init__(self, model, dataloader, device, rank, config, single_GPU):
+    def __init__(self, model, dataloader,val_dataloader, device, rank, config, single_GPU):
 
         if single_GPU:
             self.single_gpu=True
@@ -64,6 +64,7 @@ class Trainer:
         self.device = device
         self.rank = rank
         self.config = config
+        self.val_dataloader=val_dataloader
 
         #self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.model.to(self.device)
@@ -98,6 +99,39 @@ class Trainer:
         
 
 
+    def validate(self, epoch):
+
+        self.model.eval()
+        losses_val=[]
+        with torch.no_grad():
+            total_correct = 0.0
+            total_tokens = 0
+            for q, r, rtg, mask_lengths in self.dataloader:
+                # Move data to GPU if available
+                q, r, rtg, mask_lengths = q.to(self.device), r.to(self.device), rtg.to(self.device), mask_lengths.to(self.device)
+                probs_val, loss_val = self.model(mask_lengths,rtg, r, q, q)   
+                loss = loss_val.mean()
+                losses_val.append(loss.item())
+                preds = (probs_val > 0.5).float()   
+                
+                for i in range(preds.size(0)):  # loop over batch
+                    valid_len = mask_lengths[i].item()-1
+                    total_correct += (preds[i, :valid_len] == q[i, :valid_len]).float().sum()
+                    total_tokens += valid_len         # Binary predictions
+                
+        val_acc = total_correct / (self.config.k*total_tokens)
+        val_loss=float(np.mean(losses_val))
+         
+
+       
+        print(f"[Validation] Epoch {epoch}: Loss = {val_loss:.4f}")
+        wandb.log({"val/accuracy": val_acc, "val/loss":val_loss})
+
+        self.model.train()
+
+
+
+
     def train(self):
         model, config = self.model, self.config
         #raw_model = model.module if hasattr(self.model, "module") else model
@@ -112,7 +146,6 @@ class Trainer:
             model.train(is_train)
             losses = []
             pbar = tqdm(self.dataloader, desc=f"Epoch {epoch_num+1}")            
-            total_loss = 0.0
             for q, r, rtg, mask_lengths in self.dataloader:
                 # Move data to GPU if available
                 q, r, rtg, mask_lengths = q.to(self.device), r.to(self.device), rtg.to(self.device), mask_lengths.to(self.device)
@@ -235,6 +268,7 @@ class Trainer:
             if self.rank==0:
                 self.save_checkpoint()
                 print("check_point saved")
+                self.validate(epoch) 
 
 
         # Initialize wandb
