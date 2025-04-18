@@ -232,12 +232,13 @@ def main():
     train_data, val_data = random_split(data, [train_size, val_size], generator=generator)
 
     train_sampler = DistributedSampler(train_data, num_replicas=world_size, rank=rank, shuffle=True)
-    val_sampler = DistributedSampler(val_data, num_replicas=world_size, rank=rank, shuffle=False)
+    #val_sampler = DistributedSampler(val_data, num_replicas=world_size, rank=rank, shuffle=False)
 
     # sampler = DistributedSampler(data, num_replicas=world_size, rank=rank, shuffle=True)
     # dataloader = DataLoader(data, batch_size=config.batch_size, sampler=sampler)
     train_loader = DataLoader(train_data, batch_size=config.batch_size, sampler=train_sampler)
-    val_loader = DataLoader(val_data, batch_size=config.batch_size, sampler=val_sampler)
+    #val_loader = DataLoader(val_data, batch_size=config.batch_size, sampler=val_sampler)
+    val_loader = DataLoader(val_data, batch_size=config.batch_size)  # No sampler at all
 
     
     dataset_size = len(data) 
