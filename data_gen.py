@@ -69,9 +69,11 @@ def seq_fn(k,max_len, pad_scalar_val,pad_vec_val):
     while True:
         x,x_half=random_integer_vector(k)
         model = Model("Incremental_ILP")
-        model.setParam(GRB.Param.Threads, 1)
+        
         #### to write nothing in the log 
         model.setParam(GRB.Param.OutputFlag, 0)
+
+        model.setParam(GRB.Param.Threads, 1)
         # Create a list to store the variables for ILP
         variables = []
 
