@@ -106,7 +106,8 @@ def test_sample(desired_num_of_queries):
     #checkpoint = torch.load("zany-hill-68.pth",  map_location=torch.device("cpu"))
     #checkpoint = torch.load("misunderstood-serenity-69.pth",  map_location=torch.device("cpu"))
     #checkpoint = torch.load("morning-vortex-71.pth",  map_location='cpu', weights_only=True)
-    checkpoint = torch.load("dulcet-field-88.pth",  map_location='cpu', weights_only=True)
+    #checkpoint = torch.load("dulcet-field-88.pth",  map_location='cpu', weights_only=True)
+    checkpoint = torch.load("bright-surf-92.pth",  map_location='cpu', weights_only=True)
 
     # Load the model weights directly from the checkpoint
     DT_model.load_state_dict(checkpoint)
@@ -177,11 +178,11 @@ def test_sample(desired_num_of_queries):
         with torch.no_grad():  # No need to track gradients during inference
 
             ### from model
-            probs,_=DT_model( mask_length, rtgs,  results, queries)
+            #probs,_=DT_model( mask_length, rtgs,  results, queries)
 
 
             ######## Random queries
-            #probs=.5*torch.ones(config.batch_size,config.block_size,config.k).float()
+            probs=.5*torch.ones(config.batch_size,config.block_size,config.k).float()
             #probs = torch.randint(0, 2, (config.batch_size, config.block_size, config.k)).float()
 
         

@@ -42,6 +42,7 @@ class TrainerConfig:
     pad_scalar_val=-100
     pad_vec_val=0
     resume_ckpt_path = None
+    val_interval=1000
 
 
     def __init__(self, **kwargs):
@@ -143,6 +144,8 @@ class Trainer:
 
         self.tokens = 0  
         def run_epoch(mode,epoch_num=0):
+            global_step = 0  # define before epoch loop
+
             is_train = mode == 'train'
             if hasattr(self.dataloader.sampler, "set_epoch"):
                 self.dataloader.sampler.set_epoch(epoch_num)
@@ -150,6 +153,7 @@ class Trainer:
             losses = []
             pbar = tqdm(self.dataloader, desc=f"Epoch {epoch_num+1}")            
             for q, r, rtg, mask_lengths in self.dataloader:
+                global_step += 1
                 # Move data to GPU if available
                 q, r, rtg, mask_lengths = q.to(self.device), r.to(self.device), rtg.to(self.device), mask_lengths.to(self.device)
                 
@@ -258,7 +262,10 @@ class Trainer:
                         "accuracy": acc.item(),
                         "lr": lr,
                     })
-
+                if global_step % config.val_interval == 5:
+                    self.validate(epoch_num) 
+            
+            
             if not is_train:
                 test_loss = float(np.mean(losses))
                 logger.info("test loss: %f", test_loss)
@@ -271,7 +278,7 @@ class Trainer:
                 self.save_checkpoint()
                 print("check_point saved")
             
-            self.validate(epoch_num) 
+
 
 
    
