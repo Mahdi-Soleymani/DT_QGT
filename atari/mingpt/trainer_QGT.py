@@ -42,7 +42,7 @@ class TrainerConfig:
     pad_scalar_val=-100
     pad_vec_val=0
     resume_ckpt_path = None
-    val_interval=1000
+    val_interval=200
 
 
     def __init__(self, **kwargs):
