@@ -151,11 +151,11 @@ def seq_fn(k,max_len, pad_scalar_val,pad_vec_val):
         rtg=list(reversed(rtg))
         # mask=[1 for _ in range(len(r))]
         mask_length=len(rtg)
-        if mask_length>10:
-            q=q[:10]
-            r=r[:10]
-            rtg=rtg[:10]
-            mask_length=10
+        if mask_length>max_len:
+            q=q[:max_len]
+            r=r[:max_len]
+            rtg=rtg[:max_len]
+            mask_length=max_len
         
         # Pad sequences
         q_padded = pad_sequence2d(q, max_len, pad_vec_val)
@@ -321,11 +321,11 @@ if __name__ == '__main__':
     parser.add_argument('--num_samples', type=int, default=100, help='Total number of samples to generate')
     parser.add_argument('--file_name', type=str, default="dataset", help='Total number of samples to generate')
     parser.add_argument("--k", type=int, default=10, help="k")
-    parser.add_argument("--max_len", type=int, default=10, help="Maximum length data sequences have")
+    #parser.add_argument("--max_len", type=int, default=10, help="Maximum length data sequences have")
 
     args = parser.parse_args()
     config.k=args.k
-    config.max_len=args.max_len 
+    config.max_len=config.k
     n_cores = min(args.n_cores, os.cpu_count())
     num_samples = args.num_samples
     f_name=args.file_name
