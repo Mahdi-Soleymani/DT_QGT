@@ -180,11 +180,11 @@ def test_sample(desired_num_of_queries):
         with torch.no_grad():  # No need to track gradients during inference
 
             ### from model
-            probs,_=DT_model( mask_length, rtgs,  results, queries)
+            #probs,_=DT_model( mask_length, rtgs,  results, queries)
 
 
             ######## Random queries
-            #probs=.5*torch.ones(config.batch_size,config.block_size,config.k).float()
+            probs=.5*torch.ones(config.batch_size,config.block_size,config.k).float()
             #probs = torch.randint(0, 2, (config.batch_size, config.block_size, config.k)).float()
 
         

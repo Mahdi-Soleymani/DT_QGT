@@ -319,14 +319,18 @@ if __name__ == '__main__':
     mp.set_start_method("spawn", force=True)
     parser = argparse.ArgumentParser()
     parser.add_argument("--n_cores", type=int, default=4, help="Number of CPU cores to use")
-    parser.add_argument('--num_samples', type=int, default=1000000, help='Total number of samples to generate')
+    parser.add_argument('--num_samples', type=int, default=100, help='Total number of samples to generate')
     parser.add_argument('--file_name', type=str, default="dataset", help='Total number of samples to generate')
+    parser.add_argument("--k", type=int, default=10, help="k")
+    parser.add_argument("--max_len", type=int, default=10, help="Maximum length data sequences have")
 
     args = parser.parse_args()
-
+    config.k=args.k
+    config.max_len=args.max_len 
     n_cores = min(args.n_cores, os.cpu_count())
     num_samples = args.num_samples
     f_name=args.file_name
+    f_name=f"{f_name}_k{config.k}"
     save_dataset_parallel(f"{f_name}.h5", num_samples, seq_fn, config, n_cores)
     count_samples_in_h5(f"{f_name}.h5")
     file_path = f"{f_name}.h5"

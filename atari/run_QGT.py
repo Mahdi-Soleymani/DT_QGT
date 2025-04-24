@@ -41,6 +41,7 @@ from torch.utils.data import random_split
 parser = argparse.ArgumentParser()
 
 # Add arguments for each config parameter
+parser.add_argument('--k', type=int, default=10, help='Problem Size')
 parser.add_argument('--seed', type=int, default=123, help='Random seed for reproducibility')
 parser.add_argument('--epochs', type=int, default=10, help='Number of epochs to train')
 parser.add_argument('--batch_size', type=int, default=1024, help='Batch size')
@@ -80,7 +81,7 @@ set_seed(args.seed)
 
 # Initialize the TrainerConfig using command-line arguments
 config = t.TrainerConfig(
-    k=10,
+    k=args.k,
     query_dim=0,
     max_epochs=args.epochs,
     batch_size=args.batch_size,
