@@ -39,6 +39,7 @@ from torch.utils.data import DataLoader, TensorDataset
 parser = argparse.ArgumentParser()
 
 # Add arguments for each config parameter
+parser.add_argument('--k', type=int, default=10, help='Problem Size')
 parser.add_argument('--seed', type=int, default=123, help='Random seed for reproducibility')
 parser.add_argument('--epochs', type=int, default=10, help='Number of epochs to train')
 parser.add_argument('--batch_size', type=int, default=128, help='Batch size')
@@ -62,7 +63,7 @@ parser.add_argument('--attn_pdrop', type=float, default=0.1, help='Attention dro
 parser.add_argument('--resid_pdrop', type=float, default=0.1, help='Residual dropout probability')
 parser.add_argument('--pad_scalar_val', type=float, default=-10, help='Padding scalar value')
 parser.add_argument('--pad_vec_val', type=float, default=-30, help='Padding vector value')
-parser.add_argument('--dataset_path', type=str, default="atari/data_6e6.h5", help='Path to Dataset')
+parser.add_argument('--dataset_path', type=str, default="dataset_k5.h5", help='Path to Dataset')
 parser.add_argument('--criterion', type=str, default='bce', help='Loss criterion (e.g., mse, mae)')
 parser.add_argument('--no_clip_grad', action='store_false', dest='clip_grad', help='Whether to apply gradient clipping')
 parser.add_argument('--wandb', type=bool, default=False, help='Whether to apply gradient clipping')
@@ -77,7 +78,7 @@ set_seed(args.seed)
 
 # Initialize the TrainerConfig using command-line arguments
 config = t.TrainerConfig(
-    k=10,
+    k=args.k,
     query_dim=0,
     max_epochs=args.epochs,
     batch_size=args.batch_size,
@@ -162,8 +163,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model = m.DecisionTransformer(config)
 model = model.to(device)
 
-
-########3
+dataset= dataset()
+# ########3
 # trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
 # total     = sum(p.numel() for p in model.parameters())
 # print(f"Trainable: {trainable:,}")
@@ -171,9 +172,9 @@ model = model.to(device)
 # print(f"Frozen:    {total - trainable:,}")
 # print("Total dataset size:", len(dataset))
 # time.sleep(100)
-########
+# ########
 
-dataset= dataset()
+
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=config.batch_size, shuffle=True)
 val_dataloader = torch.utils.data.DataLoader(dataset, batch_size=config.batch_size, shuffle=True)
 

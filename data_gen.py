@@ -161,7 +161,6 @@ def seq_fn(k,max_len, pad_scalar_val,pad_vec_val):
         q_padded = pad_sequence2d(q, max_len, pad_vec_val)
         r_padded = pad_sequence(r, max_len, pad_scalar_val)
         rtg_padded = pad_sequence(rtg, max_len, pad_scalar_val)
-        
         return q_padded, r_padded, rtg_padded, np.int8(mask_length)
 
 
