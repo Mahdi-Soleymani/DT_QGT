@@ -65,8 +65,14 @@ def pad_sequence2d(seq, max_len, pad_value=0):
 
 
 
-def test_sample(desired_num_of_queries):
+def test_sample(desired_num_of_queries,k):
     # Initialize the model and config
+    mode="random"
+    #mode="DT"
+    sampling="soft"
+    #sampling="c"
+    c=0
+    # sampling="hard"
     config = t.TrainerConfig(
         k=10,
         query_dim=10,
@@ -95,6 +101,7 @@ def test_sample(desired_num_of_queries):
         pad_vec_val=-30,
         desired_num_of_queries=8
     )
+    config.k=k
     config.query_dim=config.k
     config.desired_num_of_queries=desired_num_of_queries
     # Initialize your model architecture (it should be the same as during training)
@@ -110,7 +117,17 @@ def test_sample(desired_num_of_queries):
     #checkpoint = torch.load("bright-surf-92.pth",  map_location='cpu', weights_only=True)
     #checkpoint = torch.load("celestial-terrain-94.pth",  map_location='cpu', weights_only=True)
     #checkpoint = torch.load("eternal-feather-87.pth",  map_location='cpu', weights_only=True)
-    checkpoint = torch.load("peach-paper-102.pth",  map_location='cpu', weights_only=True)
+    #checkpoint = torch.load("peach-paper-102.pth",  map_location='cpu', weights_only=True) #k=10
+    #checkpoint = torch.load("eternal-voice-4.pth",  map_location='cpu', weights_only=True) #k=5
+    #checkpoint = torch.load("giddy-bee-1.pth",  map_location='cpu', weights_only=True) #k=4
+    #checkpoint = torch.load("colorful-eon-1.pth",  map_location='cpu', weights_only=True) #k=3
+    #checkpoint = torch.load("deep-darkness-1.pth",  map_location='cpu', weights_only=True)  #k=2
+    #checkpoint = torch.load("desert-vortex-1.pth",  map_location='cpu', weights_only=True) #k=6
+    checkpoint = torch.load("grateful-fire-1.pth",  map_location='cpu', weights_only=True) #k=7
+    #checkpoint = torch.load("volcanic-dawn-1.pth",  map_location='cpu', weights_only=True) #k=8
+
+    
+    
     # Load the model weights directly from the checkpoint
     DT_model.load_state_dict(checkpoint)
 
@@ -119,13 +136,13 @@ def test_sample(desired_num_of_queries):
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    max_len = config.block_size  # Set max length
+    max_len = config.k  # Set max length
     pad_scalar_val=config.pad_scalar_val
     pad_vec_val=config.pad_vec_val
 
 
 
-    q, r, rtg, mask_length= [ torch.full((config.k,), pad_vec_val, dtype=torch.int)],[config.k],[-config.desired_num_of_queries],1  # Generate a sequence
+    q, r, rtg, mask_length= [ torch.full((config.k,), pad_vec_val, dtype=torch.int)],[config.k],[-config.desired_num_of_queries], 1   # Generate a sequence
     queries=(pad_sequence2d(q, max_len,pad_vec_val))  # Pad queries
     results=(pad_sequence(r, max_len,pad_scalar_val))
     rtgs=(pad_sequence(rtg, max_len,pad_scalar_val))
@@ -175,52 +192,53 @@ def test_sample(desired_num_of_queries):
     queries = queries.unsqueeze(0)
     mask_length = mask_length.unsqueeze(0)  # Adds batch dimension, result shape: [1, 10, 10]
 
-    while not is_solved and num_of_constraints<config.block_size:
+    while not is_solved:
 
         with torch.no_grad():  # No need to track gradients during inference
+            if mode=="DT":
+                
+                ### from model
+                probs,_=DT_model( mask_length, rtgs,  results, queries)
+                if num_of_constraints<config.k:
+                    probs=probs[:,num_of_constraints,:]
+                else:
+                    probs=probs[:,config.k-1,:]
 
-            ### from model
-            #probs,_=DT_model( mask_length, rtgs,  results, queries)
-
-
+            elif mode=="random":
             ######## Random queries
-            probs=.5*torch.ones(config.batch_size,config.block_size,config.k).float()
-            #probs = torch.randint(0, 2, (config.batch_size, config.block_size, config.k)).float()
+                probs=.5*torch.ones(config.batch_size,config.k).float()
+                #probs = torch.randint(0, 2, (config.batch_size, config.block_size, config.k)).float()
 
         
-        
+
         ###Sampling (soft)
-        next_query = torch.bernoulli(probs[:,num_of_constraints,:])
+        if sampling=="soft":
+            next_query = torch.bernoulli(probs)
        
+        elif sampling=="c":
         #thresholded Bernoulli sampler with a "certainty margin" c.
-        # c=0
-        # samples = torch.bernoulli(probs[:,num_of_constraints,:])
-        # next_query = torch.where(
-        #     probs[:,num_of_constraints,:] > (1 - c), torch.ones_like(probs[:,num_of_constraints,:]),           # confident 1
-        #     torch.where(
-        #         probs[:,num_of_constraints,:] < c, torch.zeros_like(probs[:,num_of_constraints,:]),            # confident 0
-        #         samples                                        # otherwise: sample
-        #     )
-        # )
-        # print(samples.shape())
-        # print(next_query.shape())
-        # time.sleep(100)
+        
+            samples = torch.bernoulli(probs)
+            next_query = torch.where(
+                probs> (1 - c), torch.ones_like(probs),           # confident 1
+                torch.where(
+                    probs < c, torch.zeros_like(probs),            # confident 0
+                    samples                                        # otherwise: sample
+                ))
+
+        elif sampling=="hard":
         ### hard thresholding
-        #print("probs")
+            next_query = (probs > 0.5).float()
 
-        #probs=probs[:,num_of_constraints,:]
-
-        #next_query = (probs > 0.5).float()
-        #print (probs[:,num_of_constraints,:])
-
-        #when using model 
         next_query=next_query[0,:]
+        num_of_constraints+=1
 
-        #when using random
-        #next_query=next_query[0,0,:]
-        #print(next_query)
-       
-        queries[:,num_of_constraints,:]=next_query
+        if num_of_constraints<config.k:
+            queries[:,num_of_constraints,:]=next_query
+        else:
+            #queries = torch.cat([queries[:, 1:, :], next_query.unsqueeze(1)], dim=1)
+            queries = torch.cat([queries[:, 1:, :], next_query.view(1, 1, -1).expand(queries.size(0), 1, -1)], dim=1)
+
 
 
         selected_variables=[]
@@ -229,15 +247,13 @@ def test_sample(desired_num_of_queries):
                 selected_variables.append(variables[i])
 
         new_result=torch.matmul(next_query,x_half_tensor)
-            
-        
         constraint = sum(selected_variables) == new_result.item()
         
         # Add the new constraint
 
     
         G_model.addConstr(constraint, name=f"{num_of_constraints}")
-        num_of_constraints+=1
+        
  
     
         
@@ -251,23 +267,28 @@ def test_sample(desired_num_of_queries):
             if num_of_solutions<=1:
                 is_solved=True
             else:
-                if num_of_constraints<config.block_size:
+                if num_of_constraints<config.k:
                     rtgs[:,    num_of_constraints]=min(-1,-config.desired_num_of_queries+num_of_constraints)
                     results[:,num_of_constraints]=new_result
                     mask_length[:,]=num_of_constraints+1
+                else:
+                    rtgs = torch.cat([rtgs[:, 1:], torch.full((rtgs.size(0), 1), -1, device=rtgs.device)], dim=1)
+                    results = torch.cat([results[:, 1:], new_result.unsqueeze(1)], dim=1)
+                    mask_length[:,]=config.k-1
+
                 
         else:
             print(f"No solution found!")
         
+    
+
+
+    return num_of_constraints, is_solved
 
 
 
-    return num_of_constraints
-
-
-
-def run_test_sample(des_len,_):
-    return test_sample(des_len)
+def run_test_sample(des_len,k,_):
+    return test_sample(des_len,k)
 
 
 
@@ -279,14 +300,16 @@ def main():
 
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--num_iter", type=int, default=1000, help="Number of iterations")
+    parser.add_argument("--num_iter", type=int, default=10, help="Number of iterations")
     parser.add_argument("--num_cores", type=int, default=6, help="Number of CPU cores to use")
     parser.add_argument("--des_len", type=int, default=3, help="Number of CPU cores to use")
+    parser.add_argument("--k", type=int, default=10, help="k")
 
     args = parser.parse_args()
-    worker_fn = partial(run_test_sample, args.des_len)
 
-    inputs = [args.des_len] * args.num_iter  # 👈 make it iterable!
+    worker_fn = partial(run_test_sample, args.des_len, args.k)
+
+    inputs = [args.des_len, args.k] * args.num_iter  # 👈 make it iterable!
 
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=args.num_cores) as executor:
@@ -297,10 +320,11 @@ def main():
     #     results.append(test_sample())
     #     print(l)
 
-
-    results=np.array(results)
-    print(results.mean())
-    print(results.std())
+    numbers, flags = zip(*results)
+    result=np.array(numbers)
+    print(result.mean())
+    print(result.std())
+    print(sum(flags))
 
 
 if __name__ == "__main__":

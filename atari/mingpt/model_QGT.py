@@ -298,29 +298,60 @@ class DecisionTransformer(nn.Module):
                 loss_fn = torch.nn.L1Loss(reduction="none")          # MAE
                 loss = loss_fn(probabilities, targets)
 
-            
              
 
-            # Create mask of shape (block_size, k)
-            mask = torch.zeros_like(logits, device=logits.device)
-            for i in range(logits.shape[0]):
-                mask[i,:mask_length[i]-1, :] = 1  # Set first mask_length rows to 1
+            # # Create mask of shape (block_size, k)
+            # mask = torch.zeros_like(logits, device=logits.device)
+            # for i in range(logits.shape[0]):
+            #     mask[i,:mask_length[i]-1, :] = 1  # Set first mask_length rows to 1
 
-            # Apply mask: Keep only the relevant losses
+            # # Apply mask: Keep only the relevant losses
 
-            loss = loss * mask  # Zero out the masked parts
-            # print(loss)
-            # l=2
-            # print(mask_length[l])
-            # print(targets[l])
-            # print(query_results[l])
-            # print(rtgs[l])
-            # time.sleep(100)
-            # Normalize the loss by the number of valid elements
+            # loss = loss * mask  # Zero out the masked parts
+            # # print(loss)
+            # # l=2
+            # # print(mask_length[l])
+            # # print(targets[l])
+            # # print(query_results[l])
+            # # print(rtgs[l])
+            # # time.sleep(100)
+            # # Normalize the loss by the number of valid elements
         
-            loss = loss.sum() / mask.sum()
-            #loss = loss.sum() 
+            # loss = loss.sum() / mask.sum()
+            # #loss = loss.sum() 
             
+
+
+
+            if self.config.criterion == "angle":
+                # Apply sigmoid to get predicted probabilities
+                probs = torch.sigmoid(logits)  # shape (B, T, k)
+
+                # Normalize predicted and target vectors
+                pred_norm = torch.norm(probs, dim=-1, keepdim=True) + 1e-8
+                true_norm = torch.norm(targets, dim=-1, keepdim=True) + 1e-8
+
+                pred_unit = probs / pred_norm  # shape (B, T, k)
+                true_unit = targets / true_norm  # shape (B, T, k)
+
+                # Compute cosine similarity
+                cos_theta = (pred_unit * true_unit).sum(dim=-1)  # shape (B, T)
+
+                # Compute sin(theta)
+                sin_theta = torch.sqrt(1 - cos_theta**2 + 1e-8)  # shape (B, T)
+
+                # Create mask (B, T)
+                B, T, k = logits.shape
+                mask = torch.zeros(B, T, device=logits.device)
+                for i in range(B):
+                    mask[i, :mask_length[i]-1] = 1  # mask_length[i]-1 active steps
+
+                # Apply mask and compute final loss
+                loss = (sin_theta * mask).sum() / mask.sum()
+
+
+            
+
 
             # loss=torch.zeros(mask_length.shape[0],1)
             # for i in range(mask_length.size(0)):
