@@ -271,7 +271,7 @@ class DecisionTransformer(nn.Module):
  
         #time.sleep(1)
         if queries is not None:
-            logits = logits[:, 2::3, :] # only keep predictions from query_embeddings
+            logits = logits[:, 1::3, :] # only keep predictions from query_embeddings
         # elif queries is None:
         #     logits = logits[:, 1:, :]
             
@@ -301,23 +301,23 @@ class DecisionTransformer(nn.Module):
              
 
             # # Create mask of shape (block_size, k)
-            # mask = torch.zeros_like(logits, device=logits.device)
-            # for i in range(logits.shape[0]):
-            #     mask[i,:mask_length[i]-1, :] = 1  # Set first mask_length rows to 1
+            mask = torch.zeros_like(logits, device=logits.device)
+            for i in range(logits.shape[0]):
+                mask[i,:mask_length[i]-1, :] = 1  # Set first mask_length rows to 1
 
             # # Apply mask: Keep only the relevant losses
 
-            # loss = loss * mask  # Zero out the masked parts
-            # # print(loss)
-            # # l=2
-            # # print(mask_length[l])
-            # # print(targets[l])
-            # # print(query_results[l])
-            # # print(rtgs[l])
-            # # time.sleep(100)
-            # # Normalize the loss by the number of valid elements
+            loss = loss * mask  # Zero out the masked parts
+            # print(loss)
+            # l=2
+            # print(mask_length[l])
+            # print(targets[l])
+            # print(query_results[l])
+            # print(rtgs[l])
+            # time.sleep(100)
+            # Normalize the loss by the number of valid elements
         
-            # loss = loss.sum() / mask.sum()
+            loss = loss.sum() / mask.sum()
             # #loss = loss.sum() 
             
 
