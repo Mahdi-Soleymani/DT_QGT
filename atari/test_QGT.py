@@ -67,8 +67,8 @@ def pad_sequence2d(seq, max_len, pad_value=0):
 
 def test_sample(desired_num_of_queries,k):
     # Initialize the model and config
-    mode="random"
-    #mode="DT"
+    #mode="random"
+    mode="DT"
     sampling="soft"
     #sampling="c"
     c=0
@@ -91,7 +91,7 @@ def test_sample(desired_num_of_queries,k):
         rtg_dim=1,
         n_embd=512,
         query_result_dim=1,
-        block_size=10,### number of max timesteps in sequence (seq len=3 times this)
+        block_size=20,### number of max timesteps in sequence (seq len=3 times this)
         embd_pdrop = 0.1,
         n_layer=6,
         n_head=8,
@@ -123,8 +123,10 @@ def test_sample(desired_num_of_queries,k):
     #checkpoint = torch.load("colorful-eon-1.pth",  map_location='cpu', weights_only=True) #k=3
     #checkpoint = torch.load("deep-darkness-1.pth",  map_location='cpu', weights_only=True)  #k=2
     #checkpoint = torch.load("desert-vortex-1.pth",  map_location='cpu', weights_only=True) #k=6
-    checkpoint = torch.load("grateful-fire-1.pth",  map_location='cpu', weights_only=True) #k=7
+    #checkpoint = torch.load("grateful-fire-1.pth",  map_location='cpu', weights_only=True) #k=7
     #checkpoint = torch.load("volcanic-dawn-1.pth",  map_location='cpu', weights_only=True) #k=8
+    #checkpoint = torch.load("wandering-snowflake-2.pth",  map_location='cpu', weights_only=True) #k=8
+    checkpoint = torch.load("desert-pine-2.pth",  map_location='cpu', weights_only=True) #k=8
 
     
     

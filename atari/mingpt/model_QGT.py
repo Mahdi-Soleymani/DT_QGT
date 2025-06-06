@@ -271,7 +271,7 @@ class DecisionTransformer(nn.Module):
  
         #time.sleep(1)
         if queries is not None:
-            logits = logits[:, 1::3, :] # only keep predictions from query_embeddings
+            logits = logits[:, 2::3, :] # only keep predictions from query_embeddings
         # elif queries is None:
         #     logits = logits[:, 1:, :]
             
